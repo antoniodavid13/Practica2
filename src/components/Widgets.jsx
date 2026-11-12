@@ -76,12 +76,40 @@ function UnitSel({ value, units, onChange, label }) {
   )
 }
 
+/* Comprobación de una fila: un solo estado (✓, ! o ✕) con su motivo principal, la medida con su incertidumbre
+   y el resto de avisos plegados en «Detalle». checks: distintivos [clase, texto] de evalRow. */
+const STATUS = { bad: ['✕', 'Revisa'], warn: ['!', 'Mejorable'], good: ['✓', 'Correcta'], info: ['i', 'Anotada'] }
+function CheckCell({ checks }) {
+  const unc = checks.find(([, s]) => s.startsWith('Con su incertidumbre'))
+  const rest = checks.filter((c) => c !== unc)
+  const kind = ['bad', 'warn', 'good', 'info'].find((k) => rest.some(([c]) => c === k)) ?? 'info'
+  // Con un solo aviso (p. ej. solo el valor teórico, aún sin medida), el aviso mismo es la etiqueta
+  const only = rest.length === 1 ? rest[0][1] : null
+  const main = kind === 'good' || only ? null : rest.find(([c]) => c === kind)?.[1]
+  const [ic, word] = STATUS[kind], label = only ?? word
+  return (
+    <div className={`chk ${kind}`}>
+      <div className="chk-head"><span className="chk-ic" aria-hidden="true">{ic}</span><b>{label}</b>{main && <span className="chk-main">{main}</span>}</div>
+      {unc && <div className="chk-unc mono">{unc[1].replace('Con su incertidumbre: ', '')}</div>}
+      {rest.length > 1 && (
+        <details className="chk-more">
+          <summary>Detalle ({rest.length})</summary>
+          <ul>{rest.map(([c, s]) => <li key={s} className={c}>{s}</li>)}</ul>
+        </details>
+      )}
+    </div>
+  )
+}
+
 function Row({ id, row, focus }) {
   const { lab, setLab } = useLab()
   const t = TABLES[id]
   const c = { ...emptyCell(row), ...lab.t[id][row.k] }
   const set = (patch) => setLab((l) => ({ ...l, t: { ...l.t, [id]: { ...l.t[id], [row.k]: { ...c, ...patch } } } }))
   const log = lab[t.bench].log[row.k]
+  // Lo que trae «Copiar lectura». Se calcula aquí, y solo si hay lectura: el compilador de React memoriza
+  // el manejador leyendo sus dependencias, y `log.fondo` fallaría en una fila sin lectura anotada.
+  const copy = log ? { med: log.text.replace('.', ','), medU: log.unit, fondo: log.fondo } : null
   const checks = evalRow(row, c)
   const name = row.sub ? `${row.label}${row.sub}` : row.label
   return (
@@ -107,14 +135,12 @@ function Row({ id, row, focus }) {
           <UnitSel value={c.medU} units={row.units} onChange={(medU) => set({ medU })} label={`Unidad de ${t.medHead} ${name}`} />
         </div>
         <button type="button" className="linkbtn" disabled={!log}
-          onClick={() => set({ med: log.text.replace('.', ','), medU: log.unit, fondo: log.fondo })}>
+          onClick={() => copy && set(copy)}>
           {log ? `Copiar lectura (${log.text} ${log.unit})` : 'Sin lectura anotada'}
         </button>
       </td>
       <td data-label="Comprobación">
-        {checks.length ? (
-          <div className="checks">{checks.map(([k, s]) => <span key={s} className={`badge ${k}`}>{s}</span>)}</div>
-        ) : <span className="note">Rellena la fila</span>}
+        {checks.length ? <CheckCell checks={checks} /> : <span className="note">Rellena la fila</span>}
       </td>
     </tr>
   )

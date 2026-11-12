@@ -1,16 +1,22 @@
-import { ADC, DIAL, OHM, VDC, bestDc, bestOhm, dialAngle, reading } from '../lib/meter'
+import { useRef } from 'react'
+import { ADC, DIAL, OHM, STEP_DEG, VDC, bestDc, bestOhm, dialAngle, reading } from '../lib/meter'
 import { ohm } from '../lib/circuit'
+import { drawSegments } from '../lib/segments'
+import { plug, screen } from '../lib/three'
+import { Lazy3D } from './Lazy3D'
 
-const CX = 150, CY = 300, R_LBL = 92, R_GRP = 124
-const polar = (deg, r) => [CX + r * Math.sin((deg * Math.PI) / 180), CY - r * Math.cos((deg * Math.PI) / 180)]
-const mean = (g) => { const ix = DIAL.map((p, i) => (p.g === g ? i : -1)).filter((i) => i >= 0); return dialAngle((ix[0] + ix.at(-1)) / 2) }
-// Las etiquetas de tensión se apartan un poco hacia los lados para no chocar con POWER y MAX
-const GROUPS = [['vdc', 'V⎓', 44], ['adc', 'A⎓'], ['aac', 'A~'], ['cap', 'F'], ['ohm', 'Ω'], ['vac', 'V~', -44]]
+/* ================= Multímetro Promax PD-695 =================
+   Modelo 3D de blender/instrumentos.py, como la fuente. Debajo, los mismos mandos en HTML: teclado,
+   lectores de pantalla y ajuste rápido. Las puntas se colocan en la placa. */
 
-const JACKS = [['20A', 62, 'red', '20A'], ['mA', 114, 'red', 'mA'], ['COM', 182, 'black', null], ['VΩHz', 240, 'red', 'V']]
 const JACK_NAME = { V: 'VΩHz', mA: 'mA', '20A': '20 A' }
 const ZONES = [['V⎓', 2, 'vdc'], ['A⎓', 7, 'adc'], ['Ω', 17, 'ohm']]
 const list = { vdc: VDC, adc: ADC, ohm: OHM }
+
+// Escala del selector en el modelo, en milímetros: centro y corona donde están los rótulos
+const DIAL_Y = -18, RING = [19, 36]
+const JACK_NODE = { '20A': '20A', mA: 'mA', V: 'V' }
+const JACK_TIP = { '20A': 'Borne 20A: corrientes grandes', mA: 'Borne mA: corrientes de hasta 400 mA', V: 'Borne VΩHz: tensión y resistencia' }
 
 function advice(r, p, m, jack, probes, right, fuse) {
   if (r.kind === 'off') return [null, 'Multímetro apagado. Pulsa POWER.']
@@ -39,8 +45,102 @@ function advice(r, p, m, jack, probes, right, fuse) {
   return [['warn', 'VÁLIDO'], `Mide, pero pierdes cifras. Prueba con ${best?.name}.`]
 }
 
-/* Multímetro virtual Promax PD-695: pantalla, POWER, selector giratorio y bornes.
-   Las puntas se colocan en la placa; aquí se elige la función, el fondo de escala y el borne del cable rojo.
+/* Pantalla LCD pintada en un canvas: indicadores DC/AC y RANGE, cuatro dígitos de 7 segmentos y la unidad */
+const LCD = { bg: '#b8c1a6', ink: '#1d2616', ghost: 'rgba(29,38,22,0.08)' }
+function paintLcd(s, r, p, power) {
+  const { g, canvas } = s, W = canvas.width, H = canvas.height
+  g.fillStyle = power ? LCD.bg : '#9aa38b'
+  g.fillRect(0, 0, W, H)
+  if (power) {
+    g.fillStyle = LCD.ink
+    g.font = '600 30px Arial, sans-serif'
+    g.textBaseline = 'top'
+    g.textAlign = 'left'
+    if (r.kind === 'volt' || r.kind === 'amp') g.fillText(r.ac ? 'AC' : 'DC', 26, 22)
+    g.textAlign = 'right'
+    if (p.name) g.fillText(`RANGE ${p.l}`, W - 26, 22)
+    drawSegments(g, r.text, { right: W - 118, y: 82, h: 168, on: LCD.ink, off: LCD.ghost, cells: 4 })
+    g.font = '700 46px Arial, sans-serif'
+    g.textAlign = 'left'
+    g.textBaseline = 'alphabetic'
+    if (!r.over) g.fillText(r.unit, W - 104, 246)
+  }
+  s.tex.needsUpdate = true
+}
+
+// Posición del selector bajo un punto de la escala (milímetros del modelo), o null si cae fuera de la corona
+function dialAt(p) {
+  const dx = p.x, dy = p.y - DIAL_Y, rad = Math.hypot(dx, dy)
+  if (rad < RING[0] || rad > RING[1]) return null
+  const a = ((Math.atan2(dx, dy) * 180) / Math.PI + 360) % 360
+  return Math.floor(a / STEP_DEG) % DIAL.length
+}
+
+function Meter3D({ dial, power, r, p, jack, fuse, onDial, onPower, onJack }) {
+  const acc = useRef(0) // grados arrastrados que aún no llegan a una posición del selector
+  const label = `Multímetro Promax PD-695 en 3D. ${power ? `Selector en ${p.name ?? p.l}. Pantalla: ${r.text} ${r.unit}.` : 'Apagado.'} Cable rojo en ${JACK_NAME[jack]}.`
+  return (
+    <Lazy3D url="models/pd695.glb" ratio={0.62} className="i3d-meter" label={label}
+      hot={(name, pt) => {
+        if (/^PD695_Selector/.test(name)) return 'sel'
+        if (name === 'PD695_Btn_POWER') return 'power'
+        const m = /^PD695_Jack_(20A|mA|V|COM)$/.exec(name)
+        if (m) return `jack:${m[1]}`
+        if (/^PD695_(Panel|Rotulos)/.test(name) && dialAt(pt) !== null) return 'scale'
+        return null
+      }}
+      turn={(k) => k === 'sel'}
+      onTurn={(k, d, total, phase) => {
+        if (phase === 'start') { acc.current = 0; return }
+        acc.current += d
+        const n = Math.trunc(acc.current / STEP_DEG)
+        if (n) { acc.current -= n * STEP_DEG; onDial((dial + n + DIAL.length) % DIAL.length) }
+      }}
+      onPick={(k, pt) => {
+        if (k === 'sel') onDial((dial + (pt.x > 0 ? 1 : -1) + DIAL.length) % DIAL.length)
+        else if (k === 'scale') { const i = dialAt(pt); if (i !== null) onDial(i) }
+        else if (k === 'power') onPower()
+        else if (k?.startsWith('jack:') && k !== 'jack:COM') onJack(k.slice(5))
+      }}
+      tip={(k, pt) => {
+        if (k === 'jack:mA' && fuse) return 'Borne mA: su fusible está fundido'
+        if (k === 'sel') return 'Selector: arrástralo en círculo o pulsa a un lado para girarlo'
+        if (k === 'scale') { const d = DIAL[dialAt(pt)]; return d ? `Pulsa para elegir ${d.name ?? d.l}` : null }
+        if (k === 'power') return `POWER: ${power ? 'apagar' : 'encender'}`
+        if (k === 'jack:COM') return 'Borne COM: el cable negro va siempre aquí'
+        if (k?.startsWith('jack:')) { const j = k.slice(5); return `${JACK_TIP[j]}${j === jack ? ' · aquí está el cable rojo' : ' · pulsa para pasar aquí el cable rojo'}` }
+        return null
+      }}
+      setup={({ THREE, nodes, root }) => {
+        const lcd = screen(THREE, nodes.PD695_LCD, 512, 304)
+        const btn = nodes.PD695_Btn_POWER
+        const at = (t) => root.worldToLocal(nodes[`PD695_Jack_${t}`].getWorldPosition(new THREE.Vector3()))
+        const red = plug(THREE, '#c81e1e'), black = plug(THREE, '#1c1c1c')
+        // El anillo del borne mA, con material propio para oscurecerlo si su fusible se funde
+        const ma = nodes.PD695_Jack_mA
+        if (ma) { ma.material = ma.material.clone(); ma.userData.base = ma.material.color.clone() }
+        root.add(red.group, black.group)
+        const place = (pl, t) => { const a = at(t); a.z += 0.0015; pl.place(a, new THREE.Vector3(a.x * 0.4, -0.2, 0.05)) }
+        place(black, 'COM')
+        return {
+          lcd, btnZ: btn?.position.z ?? 0, place, red, jack: null,
+          ma, dispose() { lcd.dispose(); red.dispose(); black.dispose(); ma?.material.dispose() },
+        }
+      }}
+      apply={({ nodes, extra, ease, invalidate }) => {
+        // El selector gira en sentido horario visto de frente: rotación negativa en z
+        ease(nodes.PD695_Selector, 'rotation', 'z', (-dialAngle(dial) * Math.PI) / 180, true)
+        ease(nodes.PD695_Btn_POWER, 'position', 'z', extra.btnZ - (power ? 0.0015 : 0))
+        paintLcd(extra.lcd, r, p, power)
+        if (extra.ma) extra.ma.material.color.copy(extra.ma.userData.base).multiplyScalar(fuse ? 0.25 : 1)
+        if (extra.jack !== jack) { extra.place(extra.red, JACK_NODE[jack]); extra.jack = jack }
+        invalidate()
+      }}
+    />
+  )
+}
+
+/* Multímetro virtual Promax PD-695: modelo 3D y, debajo, selector, fondos, bornes y consejo.
    fuse: fusible del borne mA fundido; onFuse: cambiarlo.
    alarm: [distintivo, texto] que sustituye al consejo cuando el montaje hace que la lectura no valga (un cortocircuito). */
 export function Multimeter({ dial, power, m, jack, probes, right, fuse, alarm, onDial, onPower, onJack, onFuse }) {
@@ -48,77 +148,18 @@ export function Multimeter({ dial, power, m, jack, probes, right, fuse, alarm, o
   const p = { ...DIAL[dial], i: dial }
   const [badge, note] = (power && right && alarm) || advice(r, p, m, jack, probes, right, fuse)
   const turn = (d) => onDial((dial + d + DIAL.length) % DIAL.length)
-  const ang = dialAngle(dial)
   const fondos = list[p.g] ?? null
-  const redX = JACKS.find((j) => j[3] === jack)[1]
 
   return (
     <div className="dmm">
-      <svg viewBox="0 0 300 548" role="img" aria-label={`Multímetro. Selector en ${p.l} ${p.g}. Pantalla: ${r.text} ${r.unit}`}>
-        <rect className="dmm-body" x="8" y="8" width="284" height="500" rx="30" />
-        {/* Pantalla */}
-        <rect className="dmm-bezel" x="30" y="28" width="240" height="114" rx="14" />
-        <rect className="dmm-lcd" x="44" y="40" width="212" height="90" rx="6" />
-        {power && (
-          <g className="dmm-lcd-ink">
-            <text className="dmm-ann" x="54" y="56">{r.kind === 'volt' || r.kind === 'amp' ? (r.ac ? 'AC' : 'DC') : ''}</text>
-            <text className="dmm-ann" x="246" y="56" textAnchor="end">{p.name ? `RANGE ${p.l}` : ''}</text>
-            <text className="dmm-digits" x="204" y="112" textAnchor="end">{r.text}</text>
-            <text className="dmm-unit" x="248" y="112" textAnchor="end">{r.over ? '' : r.unit}</text>
-          </g>
-        )}
-        {/* Panel */}
-        <rect className="dmm-panel" x="22" y="154" width="256" height="322" rx="16" />
-        <g className="dmm-btn" role="button" tabIndex="0" aria-pressed={power} aria-label="POWER"
-          onClick={onPower} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onPower() } }}>
-          <rect x="36" y="166" width="54" height="17" rx="8.5" />
-          <text x="63" y="198" textAnchor="middle">POWER</text>
-        </g>
-        <g className="dmm-btn deco" aria-hidden="true">
-          <rect x="210" y="166" width="54" height="17" rx="8.5" />
-          <text x="237" y="198" textAnchor="middle">MAX</text>
-        </g>
-        {/* Selector */}
-        {GROUPS.map(([g, t, a]) => {
-          const [x, y] = polar(a ?? mean(g), a ? 116 : R_GRP)
-          return <text key={g} className="dmm-grp" x={x} y={y + 4} textAnchor="middle">{t}</text>
-        })}
-        {DIAL.map((d, i) => {
-          const a = dialAngle(i), [x1, y1] = polar(a, 62), [x2, y2] = polar(a, 69), [lx, ly] = polar(a, R_LBL)
-          return (
-            <g key={i} className={`dmm-pos${i === dial ? ' sel' : ''}${d.g === 'ohm' ? ' ohm' : ''}`} onClick={() => onDial(i)}>
-              <line x1={x1} y1={y1} x2={x2} y2={y2} />
-              <circle cx={lx} cy={ly} r="10" />
-              <text x={lx} y={ly + 3} textAnchor="middle">{d.l}</text>
-            </g>
-          )
-        })}
-        <g className="dmm-knob" style={{ transform: `translate(${CX}px, ${CY}px) rotate(${ang}deg)` }}>
-          <circle r="56" />
-          <rect className="ridge" x="-12" y="-55" width="24" height="110" rx="9" />
-          <line className="mark" x1="0" y1="-50" x2="0" y2="-38" />
-        </g>
-        {/* Bornes */}
-        {JACKS.map(([t, x, c, id]) => (
-          <g key={t} className={`dmm-jack ${c}${fuse && id === 'mA' ? ' blown' : ''}`} onClick={id ? () => onJack(id) : undefined} style={id ? { cursor: 'pointer' } : undefined}>
-            <text x={x} y="430" textAnchor="middle">{t}</text>
-            <circle className="ring" cx={x} cy="450" r="13" />
-            <circle className="hole" cx={x} cy="450" r="7" />
-          </g>
-        ))}
-        <text className="dmm-brand" x="40" y="494">PROMAX</text>
-        <text className="dmm-model" x="262" y="494" textAnchor="end">MULTIMETER PD-695</text>
-        {/* Cables de las puntas */}
-        <path className="dmm-cable black" d="M182 450 C 182 510, 168 520, 160 548" />
-        <path className="dmm-cable red" d={`M${redX} 450 C ${redX} 510, 252 520, 262 548`} />
-      </svg>
-
+      <Meter3D dial={dial} power={power} r={r} p={p} jack={jack} fuse={fuse} onDial={onDial} onPower={onPower} onJack={onJack} />
       <div className="dmm-ctl">
         <button className="btn sm" type="button" onClick={() => turn(-1)} aria-label="Girar selector a la izquierda">↺</button>
         <div className="segctl" role="radiogroup" aria-label="Zona del selector">
           {ZONES.map(([t, i, g]) => <button key={g} type="button" role="radio" aria-checked={p.g === g} onClick={() => onDial(i)}>{t}</button>)}
         </div>
         <button className="btn sm" type="button" onClick={() => turn(1)} aria-label="Girar selector a la derecha">↻</button>
+        <button className="btn sm" type="button" aria-pressed={power} onClick={onPower}>{power ? 'Apagar' : 'POWER'}</button>
       </div>
       {fondos && (
         <div className="dmm-ctl">

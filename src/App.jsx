@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { SLIDES } from './Slides'
 import { PrintSheet, ThemeToggle } from './components/Widgets'
 import { Narrator } from './components/Narrator'
-import { LabContext, loadLab, saveLab } from './lib/lab'
+import { LabContext, SlideContext, loadLab, saveLab } from './lib/lab'
 import { settle } from './lib/practice'
 
 /* ================= Motor de diapositivas ================= */
@@ -117,7 +117,10 @@ export default function App() {
         {SLIDES.map((s, i) => (
           <section key={i} className={`slide${i === cur ? ' active' : ''}${i < cur ? ' before' : ''}${s.group ? ` grp-${s.group}` : ''}`}
             aria-hidden={i !== cur} inert={i !== cur}>
-            {s.body(steps[i])}
+            {/* Cada diapositiva sabe cuál es la siguiente: la guía ofrece ir a ella al terminar la actividad */}
+            <SlideContext value={{ next: i < N - 1 ? { title: SLIDES[i + 1].title, go: () => dispatch({ type: 'go', i: i + 1 }) } : null }}>
+              {s.body(steps[i])}
+            </SlideContext>
           </section>
         ))}
       </main>

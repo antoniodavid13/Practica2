@@ -96,43 +96,7 @@
 
 /* ---------- multímetro ---------- */
 .dmm{display:grid;gap:10px;justify-items:center;margin-top:6px}
-.dmm svg{display:block;width:100%;max-width:225px;height:auto;user-select:none;-webkit-user-select:none}
-.dmm-body{fill:var(--dmm-body);stroke:var(--dmm-edge);stroke-width:2}
-.dmm-bezel{fill:var(--dmm-bezel)}
-.dmm-lcd{fill:var(--lcd)}
-.dmm-lcd-ink text{fill:var(--lcd-fg);font-family:var(--font-mono)}
-.dmm-digits{font-size:42px;font-weight:500;letter-spacing:-.02em}
-.dmm-unit{font-size:16px;font-weight:600}
-.dmm-ann{font-size:9px;font-weight:600;letter-spacing:.06em}
-.dmm-panel{fill:var(--dmm-panel);stroke:var(--dmm-edge);stroke-width:1}
-.dmm-btn rect{fill:#9ca3af;stroke:#6b7280;stroke-width:1}
-.dmm-btn text{font:700 9px var(--font-sans);fill:var(--dmm-ink)}
-.dmm-btn:not(.deco){cursor:pointer}
-.dmm-btn:not(.deco):hover rect{fill:#b4b9c1}
-.dmm-btn[aria-pressed="false"] rect{fill:#6b7280}
-.dmm-grp{font:700 13px var(--font-sans);fill:var(--dmm-ink)}
-.dmm-pos{cursor:pointer}
-.dmm-pos line{stroke:var(--dmm-ink);stroke-width:2.2}
-.dmm-pos circle{fill:transparent}
-.dmm-pos:hover circle{fill:rgba(0,0,0,.08)}
-.dmm-pos text{font:600 7.4px var(--font-sans);fill:var(--dmm-ink)}
-.dmm-pos.ohm text{font-weight:700}
-.dmm-pos.sel circle{fill:rgba(0,0,0,.14)}
-.dmm-pos.sel text{fill:#b91c1c;font-weight:800}
-.dmm-knob{transition:transform .45s var(--ease);pointer-events:none}
-.dmm-knob circle{fill:var(--dmm-knob);stroke:var(--dmm-edge);stroke-width:2}
-.dmm-knob .ridge{fill:#f8d156;stroke:var(--dmm-edge);stroke-width:1.5}
-.dmm-knob .mark{stroke:var(--dmm-ink);stroke-width:2.5;stroke-linecap:round}
-.dmm-jack text{font:700 10px var(--font-sans);fill:var(--dmm-ink)}
-.dmm-jack .ring{fill:#b91c1c}
-.dmm-jack.black .ring{fill:#18181b}
-.dmm-jack .hole{fill:#0a0a0a}
-.dmm-jack.blown .ring{fill:#52525b;stroke:var(--bad);stroke-width:2.5;stroke-dasharray:4 3}
-.dmm-brand{font:700 9px var(--font-sans);letter-spacing:.18em;fill:#b45309}
-.dmm-model{font:700 11px var(--font-sans);fill:var(--dmm-ink)}
-.dmm-cable{fill:none;stroke-width:6;stroke-linecap:round}
-.dmm-cable.red{stroke:#dc2626}
-.dmm-cable.black{stroke:#18181b}
+.dmm .i3d-wrap{width:100%;max-width:300px}
 .dmm-ctl{display:flex;gap:6px;align-items:center;width:100%;max-width:330px}
 .dmm-ctl .segctl{flex:1;min-width:0}
 .dmm-ctl .segctl button{min-width:0;padding:0 2px;height:28px;font-size:11.5px}
@@ -151,8 +115,19 @@ select:focus-visible{outline:2px solid var(--cur);outline-offset:2px}
 select option{background:var(--surface);color:var(--fg)}
 .linkbtn{margin-top:6px;border:0;background:none;padding:0;font:500 12px var(--font-sans);color:var(--cur);cursor:pointer;text-align:left}
 .linkbtn:disabled{color:var(--faint);cursor:default}
-.checks{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
-.checks .badge{white-space:normal;height:auto;min-height:22px;padding:2px 8px;line-height:1.3}
+/* Comprobación de una fila: un estado, la medida con su incertidumbre y el detalle plegado */
+.chk{--k:var(--muted);display:grid;gap:3px;font-size:12.5px;line-height:1.35;min-width:150px}
+.chk.good{--k:var(--ok)} .chk.warn{--k:var(--r4)} .chk.bad{--k:var(--bad)} .chk.info{--k:var(--cur)}
+.chk-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px}
+.chk-head b{color:var(--k);font-weight:600}
+.chk-ic{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;background:var(--k);color:var(--bg);font:700 11px var(--font-mono);flex:none;align-self:center}
+.chk-main{flex-basis:100%;color:var(--fg-2)}
+.chk-unc{font-size:12px;color:var(--fg-2)}
+.chk-more summary{cursor:pointer;color:var(--muted);font-size:11.5px;width:max-content}
+.chk-more ul{margin:4px 0 0;padding:0 0 0 14px;color:var(--fg-2);font-size:11.5px}
+.chk-more li.bad{color:var(--bad)} .chk-more li.warn{color:color-mix(in srgb,var(--r4) 80%,var(--fg))} .chk-more li.good{color:var(--ok)}
+/* En las diapositivas de tabla, la guía no se estira a todo el ancho */
+.wrap.single .guide{max-width:760px}
 .t111-cap{font-size:12px;font-style:italic;color:var(--muted);text-align:center;padding:10px;border-top:1px solid var(--line)}
 .tablebox{margin-top:6px}
 .t111 tr.sol th,.t111 tr.sol td{background:color-mix(in srgb,var(--ok) 7%,transparent);color:var(--fg-2)}
@@ -455,6 +430,8 @@ select option{background:var(--surface);color:var(--fg)}
 .guide-bar{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin:-2px 0 10px}
 .guide-bar i{display:block;height:100%;background:var(--mont,var(--cur));border-radius:inherit;transition:width .4s var(--ease)}
 .guide.ok .guide-bar i{background:var(--ok)}
+.guide-go{margin-top:10px;width:100%;justify-content:space-between;animation:step-in .45s var(--ease)}
+.guide-go span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ---------- Enunciado del guion, plegado sobre los pasos ---------- */
 .enun-fold{margin:10px 0 12px}

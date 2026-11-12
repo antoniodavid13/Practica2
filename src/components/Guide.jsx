@@ -1,11 +1,13 @@
-import { useLab } from '../lib/lab'
+import { useLab, useSlide } from '../lib/lab'
 
 /* «Qué tienes que hacer»: los pasos de la actividad, en orden y todos a la vista.
    guide: función de lib/guides.js que devuelve los pasos a partir del estado del laboratorio.
    Cada paso dice qué hacer y, debajo, por qué (`why`). Se marcan solos al hacerlos; el actual se resalta
-   y lleva su explicación y su pista. Los hechos se compactan a una línea para que el actual quede siempre a la vista. */
+   y lleva su explicación y su pista. Los hechos se compactan a una línea para que el actual quede siempre a la vista.
+   Al terminar, ofrece pasar a la siguiente diapositiva. */
 export function Guide({ guide }) {
   const { lab } = useLab()
+  const { next } = useSlide()
   const steps = guide(lab)
   const last = [...steps].reverse().find((s) => s.ok !== undefined)
   // final: el último paso implica los demás (p. ej. «anota las cinco corrientes»); si no, deben cumplirse todos
@@ -38,6 +40,11 @@ export function Guide({ guide }) {
           )
         })}
       </ol>
+      {done && next && (
+        <button className="btn primary sm guide-go" type="button" onClick={next.go}>
+          <span>Siguiente: {next.title}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+        </button>
+      )}
     </div>
   )
 }

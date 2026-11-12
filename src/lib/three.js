@@ -8,7 +8,9 @@ export function screen(THREE, mesh, w, h) {
   const tex = new THREE.CanvasTexture(canvas)
   tex.colorSpace = THREE.SRGBColorSpace
   tex.flipY = false
-  tex.anisotropy = 4
+  tex.anisotropy = 16 // la pantalla se ve inclinada al girar la vista: filtrado máximo
+  tex.generateMipmaps = true
+  tex.minFilter = THREE.LinearMipmapLinearFilter
   const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })
   if (mesh) mesh.material = mat
   return { canvas, g: canvas.getContext('2d'), tex, dispose() { tex.dispose(); mat.dispose() } }

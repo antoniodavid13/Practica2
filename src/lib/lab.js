@@ -6,6 +6,10 @@ import { HOLE } from './board'
 export const LabContext = createContext(null)
 export const useLab = () => useContext(LabContext)
 
+// Navegación de cada diapositiva: { next: { title, go } } hacia la siguiente (null en la última)
+export const SlideContext = createContext({ next: null })
+export const useSlide = () => useContext(SlideContext)
+
 const KEY = 'p2-corriente-continua:lab:v1'
 const IDS = ['m1', 'm2', 'm3']
 const TABLES = ['t23', 't24', 't25', 't26']

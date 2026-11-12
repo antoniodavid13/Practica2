@@ -50,7 +50,11 @@ export function Instrument3D({ url, label, ratio = 1, hot, turn, onPick, onTurn,
     const el = box.current
     let disposed = false
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    /* Supermuestreo: se dibuja con 2 o 3 píxeles por píxel de pantalla. Los rótulos y las líneas finas del modelo
+       miden menos de un píxel cuando el aparato se ve pequeño (móvil, columna estrecha) y, sin esto, se rompen.
+       Solo se dibuja cuando algo cambia, así que el coste extra apenas se nota. */
+    const ssaa = () => Math.min(3, Math.max(2, (window.devicePixelRatio || 1) * 1.5))
+    renderer.setPixelRatio(ssaa())
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.NeutralToneMapping
     renderer.toneMappingExposure = 0.95
@@ -119,6 +123,7 @@ export function Instrument3D({ url, label, ratio = 1, hot, turn, onPick, onTurn,
     function resize() {
       const w = el.clientWidth, h = el.clientHeight
       if (!w || !h) return
+      renderer.setPixelRatio(ssaa()) // por si cambia el zoom del navegador o la pantalla
       renderer.setSize(w, h, false)
       camera.aspect = w / h
       camera.updateProjectionMatrix()
