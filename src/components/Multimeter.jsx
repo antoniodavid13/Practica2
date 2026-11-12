@@ -46,7 +46,7 @@ function advice(r, p, m, jack, probes, right, fuse) {
 }
 
 /* Pantalla LCD pintada en un canvas: indicadores DC/AC y RANGE, cuatro dígitos de 7 segmentos y la unidad */
-const LCD = { bg: '#b8c1a6', ink: '#1d2616', ghost: 'rgba(29,38,22,0.08)' }
+const LCD = { bg: '#c3cbb2', ink: '#1a2213', ghost: 'rgba(26,34,19,0.03)' }
 function paintLcd(s, r, p, power) {
   const { g, canvas } = s, W = canvas.width, H = canvas.height
   g.fillStyle = power ? LCD.bg : '#9aa38b'
@@ -59,11 +59,13 @@ function paintLcd(s, r, p, power) {
     if (r.kind === 'volt' || r.kind === 'amp') g.fillText(r.ac ? 'AC' : 'DC', 26, 22)
     g.textAlign = 'right'
     if (p.name) g.fillText(`RANGE ${p.l}`, W - 26, 22)
-    drawSegments(g, r.text, { right: W - 118, y: 82, h: 168, on: LCD.ink, off: LCD.ghost, cells: 4 })
-    g.font = '700 46px Arial, sans-serif'
+    // Cuatro dígitos de 120 px (cada celda mide 0,75 de la altura): caben a la izquierda de la unidad
+    drawSegments(g, r.text, { right: W - 112, y: 104, h: 120, on: LCD.ink, off: LCD.ghost, cells: 4 })
+    g.fillStyle = LCD.ink // drawSegments deja puesto el color de los segmentos apagados
+    g.font = '700 44px Arial, sans-serif'
     g.textAlign = 'left'
     g.textBaseline = 'alphabetic'
-    if (!r.over) g.fillText(r.unit, W - 104, 246)
+    if (!r.over) g.fillText(r.unit, W - 100, 222)
   }
   s.tex.needsUpdate = true
 }
@@ -80,7 +82,7 @@ function Meter3D({ dial, power, r, p, jack, fuse, onDial, onPower, onJack }) {
   const acc = useRef(0) // grados arrastrados que aún no llegan a una posición del selector
   const label = `Multímetro Promax PD-695 en 3D. ${power ? `Selector en ${p.name ?? p.l}. Pantalla: ${r.text} ${r.unit}.` : 'Apagado.'} Cable rojo en ${JACK_NAME[jack]}.`
   return (
-    <Lazy3D url="models/pd695.glb" ratio={0.62} className="i3d-meter" label={label}
+    <Lazy3D url="models/pd695.glb" ratio={0.5} className="i3d-meter" label={label}
       hot={(name, pt) => {
         if (/^PD695_Selector/.test(name)) return 'sel'
         if (name === 'PD695_Btn_POWER') return 'power'

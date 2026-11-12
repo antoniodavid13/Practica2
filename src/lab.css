@@ -96,7 +96,10 @@
 
 /* ---------- multímetro ---------- */
 .dmm{display:grid;gap:10px;justify-items:center;margin-top:6px}
-.dmm .i3d-wrap{width:100%;max-width:300px}
+.dmm .i3d-wrap{width:100%;max-width:300px}
+/* En el multímetro, los botones del visor solo con icono: con texto tapaban la pantalla */
+.i3d-meter .i3d-btn span{display:none}
+.i3d-meter .i3d-btn{padding:0 7px}
 .dmm-ctl{display:flex;gap:6px;align-items:center;width:100%;max-width:330px}
 .dmm-ctl .segctl{flex:1;min-width:0}
 .dmm-ctl .segctl button{min-width:0;padding:0 2px;height:28px;font-size:11.5px}
