@@ -1,0 +1,17 @@
+/* ================= Fuente en 3D (modelos de blender/instrumentos.py) ================= */
+.i3d{position:relative;width:100%;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  background:radial-gradient(120% 90% at 50% 20%,color-mix(in srgb,var(--surface) 92%,#fff) 0%,var(--sunken) 70%);
+  user-select:none;-webkit-user-select:none}
+.i3d-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;outline:none}
+.i3d-msg{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;color:var(--muted);pointer-events:none}
+.i3d-tip{position:absolute;left:10px;bottom:10px;max-width:calc(100% - 20px);padding:5px 10px;border-radius:8px;background:color-mix(in srgb,var(--fg) 88%,transparent);color:var(--bg);font-size:12.5px;pointer-events:none}
+.i3d-tools{position:absolute;top:8px;right:8px;display:flex;gap:4px}
+.i3d-btn{height:28px;padding:0 8px;border-radius:8px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 85%,transparent);color:var(--fg-2);font:500 11.5px var(--font-sans);display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.i3d-btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.i3d-btn.on{color:var(--fg);border-color:var(--line-2)}
+
+.supply{background:transparent;border:0;padding:0;box-shadow:none;color:var(--fg);gap:8px}
+.supply-more summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+.supply-more .supply-chs{margin-top:8px;color:#18181b}
+.supply-msg{margin:0}
+.i3d-wrap{width:100%;min-width:0}
