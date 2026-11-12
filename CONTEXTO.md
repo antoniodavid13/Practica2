@@ -8,6 +8,8 @@ La documentación completa está en la bóveda LabVideos: `06 Prácticas/Prácti
 
 `docs/arpractica2.pdf`. Es material del departamento: nunca va en `public/`.
 
+`docs/2003-Spanish.pdf`: catálogo Promax de 2003, de donde sale la precisión del PD-695. Tampoco va en `public/`.
+
 ## Bloques
 
 | Bloque | Color | Contenido | Tablas |
@@ -34,6 +36,7 @@ La documentación completa está en la bóveda LabVideos: `06 Prácticas/Prácti
 - **Intervalos:** con cada resistencia en sus extremos, no «teórico ± 5 %», que no vale para corrientes de rama.
 - **R₆:** una sola pieza `r6`; su campo `as` dice qué resistencia física hace de R₆ (`r3b` o `r5`).
 - **Fuente:** lo que entrega difiere un poco de lo que marca su voltímetro (`OFFSET` y `FIVE` en `practice.js`). Son valores propuestos.
+- **Incertidumbre:** ±(0,5 % de la lectura + 1 dígito), la «precisión básica» del PD-695 en el catálogo Promax de 2003 (`docs/2003-Spanish.pdf`). El catálogo no da cifras por función: se usa en tensión, corriente y resistencia. Se expresa con una cifra significativa (dos si empieza por 1) y sin más decimales que la pantalla (`ACCURACY`, `uncertainty()` y `express()` en `meter.js`). La ley de corrientes se cumple si la diferencia cabe en la suma de las incertidumbres de las lecturas.
 - **Errores con consecuencias:** la fuente limita a 1 A y su tensión cae (`analyze` en `sim.js`). El fusible del borne mA se funde por encima de 400 mA (`FUSE_MA`) un LED se estropea con más de 5 V en inversa (`LED_VR`) y una resistencia se quema si disipa más de ½ W (`P_MAX`), y queda abierta. Las tres cifras son propuestas. `settle()` en `practice.js` aplica estos cambios tras cada acción. Un amperímetro en paralelo con una resistencia se detecta con `parallelTo()`.
 
 ## Pendiente

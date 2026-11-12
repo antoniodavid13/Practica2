@@ -52,8 +52,13 @@ export const Legend = ({ items }) => (
 export const Ri = ({ n }) => <><i>R</i><sub>{n}</sub></>
 export const Ii = ({ n }) => <><i>I</i><sub>{n}</sub></>
 
-// Punto del guion, citado tal cual
-export const Enun = ({ n, children }) => (
+// Punto del guion, citado tal cual. fold: plegado bajo una línea, para que los pasos de la actividad queden arriba
+export const Enun = ({ n, fold, children }) => fold ? (
+  <details className="enun-fold">
+    <summary><span className="enun-n">{n}</span>Enunciado de la actividad {n}</summary>
+    <blockquote className="enun"><p>{children}</p></blockquote>
+  </details>
+) : (
   <blockquote className="enun"><span className="enun-n">{n}</span><p>{children}</p></blockquote>
 )
 

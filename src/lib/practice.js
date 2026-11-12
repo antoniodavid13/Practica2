@@ -1,6 +1,6 @@
 import { R, fmt, par } from './circuit.js'
 import { REAL, netFinder, netOfHole, resistance } from './board.js'
-import { DIAL, OHM, bestDc, bestOhm, reading } from './meter.js'
+import { DIAL, OHM, bestDc, bestOhm, express, reading, uncertainty } from './meter.js'
 import { analyze } from './sim.js'
 
 /* ================= Datos y reglas de la Práctica 2 ================= */
@@ -139,17 +139,20 @@ export function evalRow(row, c) {
     else out.push(['warn', 'Válido, pero hay un fondo con más resolución'])
   }
   if (v !== null) {
+    // Incertidumbre de la medida: ±(0,5 % de la lectura + 1 dígito) en el fondo elegido
+    const u = g ? uncertainty(v, g) : 0
     if (row.exp !== null) {
-      const res_ = g ? resolution(g) : 0
-      const ok = v >= row.lo - res_ && v <= row.hi + res_
+      // Coherente si el intervalo de la medida, v ± u, toca el intervalo teórico
+      const ok = v >= row.lo - u && v <= row.hi + u
       out.push([ok ? 'good' : 'bad', ok ? 'Dentro del intervalo coherente' : 'Fuera del intervalo coherente'])
-      if (g && Math.abs(v) / res_ < 10) out.push(['info', 'Pocas cuentas: este fondo no da más resolución'])
+      if (g && Math.abs(v) / resolution(g) < 10) out.push(['info', 'Pocas cuentas: este fondo no da más resolución'])
     }
     const dec = (c.med.trim().replace(',', '.').split('.')[1] || '').length
     if (g && g.u === c.medU && dec < g.d) out.push(['warn', `Anota todos los dígitos: en ${g.name} salen ${g.d} decimales`])
     if (g) {
       const r = resolution(g) / UNITS[c.medU], d = g.u === c.medU ? g.d : Math.max(0, Math.ceil(-Math.log10(r) - 1e-9))
-      out.push(['info', `Con incertidumbre: ${fmt(med, d)} ± ${fmt(r, d)} ${c.medU}`])
+      const x = express(med, u / UNITS[c.medU], d)
+      out.push(['info', `Con su incertidumbre: (${fmt(x.med, x.dec)} ± ${fmt(x.u, x.dec)}) ${c.medU}`])
     }
   }
   return out

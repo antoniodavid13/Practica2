@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { REAL, RES_NAME, SOLUTIONS, checkBench, names, openBranch } from '../lib/board'
 import { amp, fmt, glow } from '../lib/circuit'
 import { useLab } from '../lib/lab'
-import { DIAL, reading } from '../lib/meter'
+import { DIAL, express, reading, uncertainty } from '../lib/meter'
 import {
   CURRENT_KEY, TERMINALS, UNITS, ammeterOn, branchOf, busVolts, display, fondos, jackOk, measureBench, parallelTo, toNum,
 } from '../lib/practice'
@@ -222,16 +222,16 @@ export function BenchMeter({ id }) {
   )
 }
 
-/* Lectura compacta del multímetro, fija arriba al desplazarse. Solo en pantallas estrechas,
-   donde el multímetro queda lejos de la placa: permite medir sin subir y bajar. */
-export function BenchReadout({ id }) {
+/* Lectura compacta del multímetro, fija arriba al desplazarse. En pantallas estrechas, o siempre con `always`,
+   cuando el multímetro queda lejos de la placa: permite medir sin subir y bajar. */
+export function BenchReadout({ id, always }) {
   const [bench, update, supply] = useBench(id)
   const { r, right } = measureBench(bench, supply)
   const g = DIAL[bench.dial].g
   const zones = g === 'adc' || g === 'vdc' || g === 'ohm' ? fondos(g) : []
   const text = r.kind === 'off' ? 'Apagado' : bench.fuse && bench.jack === 'mA' ? 'Fusible fundido' : !right ? 'Revisa el borne' : r.over ? 'OL' : `${r.text} ${r.unit}`
   return (
-    <div className="readout-sm" aria-label="Lectura del multímetro">
+    <div className={`readout-sm${always ? ' always' : ''}`} aria-label="Lectura del multímetro">
       <div className="readout-lcd"><span className="mono">{text}</span></div>
       <div className="segctl" role="radiogroup" aria-label="Fondo de escala">
         {zones.map((p) => (
@@ -366,23 +366,32 @@ export function CurrentLog({ id, keys, target }) {
   )
 }
 
-/* Ley de corrientes con las lecturas anotadas. eqs: [{ node, ins, outs }] */
+/* Ley de corrientes con las lecturas anotadas. eqs: [{ node, ins, outs }]
+   Se cumple si la diferencia entre lo que entra y lo que sale cabe en la suma de las incertidumbres de las lecturas. */
+const mA = (x, d) => `${fmt(x * 1e3, d)} mA`
 export function KclCheck({ id, eqs }) {
   const [bench] = useBench(id)
   const val = (k) => { const e = bench.log[k]; return e ? toNum(e.text) * UNITS[e.unit] : null }
+  // Incertidumbre de una lectura anotada, en el fondo en que se tomó
+  const unc = (k) => { const e = bench.log[k], p = DIAL.find((x) => x.g === 'adc' && x.name === e.fondo); return p ? uncertainty(val(k), p) : 0 }
   const side = (ks) => ks.map(nice).join(' + ')
   return (
     <div className="kcl">
       {eqs.map(({ node, ins, outs }) => {
-        const all = [...ins, ...outs].map(val), ready = all.every((v) => v !== null)
+        const keys = [...ins, ...outs], ready = keys.every((k) => val(k) !== null)
         const sum = (ks) => ks.reduce((a, k) => a + val(k), 0)
         const a = ready ? sum(ins) : 0, b = ready ? sum(outs) : 0
-        const ok = ready && Math.abs(a - b) <= 0.01e-3 * (ins.length + outs.length)
+        const margin = ready ? keys.reduce((s, k) => s + unc(k), 0) : 0
+        const ok = ready && Math.abs(a - b) <= margin + 1e-12
+        const x = ready ? express((a - b) * 1e3, margin * 1e3, 2) : null
         return (
           <div key={node} className="eq">
             <span>{node}: {side(ins)} = {side(outs)}</span>
-            {ready ? <><span className="mute">{amp(a)} = {amp(b)}</span><span className={`badge ${ok ? 'good' : 'warn'}`}>{ok ? 'Se cumple' : 'Revisa tus medidas'}</span></>
-              : <span className="mute">Faltan medidas</span>}
+            {ready ? <>
+              <span className="mute">{mA(a, 2)} = {mA(b, 2)}</span>
+              <span className={`badge ${ok ? 'good' : 'warn'}`}>{ok ? 'Se cumple' : 'Revisa tus medidas'}</span>
+              <span className="mute kcl-margin">Diferencia {fmt(x.med, x.dec)} mA · margen ±{fmt(x.u, x.dec)} mA, la suma de las incertidumbres</span>
+            </> : <span className="mute">Faltan medidas</span>}
           </div>
         )
       })}

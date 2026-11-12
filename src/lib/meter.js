@@ -45,6 +45,24 @@ export const VDC = zone('vdc'), ADC = zone('adc')
 // Fondo inmediatamente superior al valor, en la zona de tensión ('vdc') o de corriente ('adc')
 export const bestDc = (v, g) => zone(g).find((p) => fitsDc(v, p)) || null
 
+/* ---------- Incertidumbre ----------
+   Precisión del PD-695: ±(0,5 % de la lectura + 1 dígito). Es la «precisión básica» del catálogo Promax de 2003
+   (Multímetros digitales, serie industrial PD-693/695/697). El catálogo no da cifras por función, así que se
+   usa la misma en tensión, corriente y resistencia. Un dígito es la resolución del fondo. */
+export const ACCURACY = { pct: 0.5, digits: 1 }
+// Incertidumbre de una lectura `value` (en unidades base: V, A u Ω) tomada en la posición `p` del selector
+export const uncertainty = (value, p) => (Math.abs(value) * ACCURACY.pct) / 100 + ACCURACY.digits * resOf(p)
+
+/* Expresión de la medida con su incertidumbre, en las unidades de la pantalla.
+   La incertidumbre lleva una cifra significativa (dos si empieza por 1) y nunca más decimales que la pantalla
+   (`maxDec`); la medida se escribe con los mismos decimales. Devuelve { dec, med, u }. */
+export function express(med, u, maxDec) {
+  const e = Math.floor(Math.log10(u)), lead = u / 10 ** e
+  const dec = Math.max(0, Math.min(maxDec, -e + (lead < 2 ? 1 : 0)))
+  const k = 10 ** dec
+  return { dec, med: Math.round(med * k) / k, u: Math.max(1, Math.round(u * k)) / k }
+}
+
 /* Lo que muestra la pantalla con el circuito alimentado. m: { ohms, volts, amps }.
    El signo se conserva: una corriente que entra por la punta negra marca negativo. */
 export function reading(dial, m, power) {

@@ -138,7 +138,7 @@ export const SLIDES = [
     ),
   },
   {
-    title: 'El multímetro', audio: '04-multimetro', steps: 4,
+    title: 'El multímetro', audio: '04-multimetro', steps: 5,
     body: (step) => (
       <div className="wrap">
         <div className="copy">
@@ -150,6 +150,7 @@ export const SLIDES = [
             ['2', <><b>Corriente.</b> Selector en <b>A⎓</b>, cable rojo en <b>20 A</b> o en <b>mA</b>. Va siempre <b>en serie</b>.</>],
             ['3', <><b>Empieza por 20 A.</b> Si la medida es pequeña, pasa el cable a mA y elige un fondo menor. Una corriente grande por el borne mA funde su fusible.</>],
             ['4', <><b>Signo.</b> Lee la corriente que entra por la punta roja y sale por la negra.</>],
+            ['5', <><b>Incertidumbre.</b> Cada lectura vale <b>±(0,5 % de la lectura + 1 dígito)</b>: la precisión que da Promax para el PD-695. Un dígito es la resolución del fondo.</>],
           ]} />
           <p className="note" style={{ marginTop: 16 }}>El guion cita el <b>Promax PD-181</b> y el <b>Keysight U1232A</b>. Aquí todas las medidas se hacen con el <b>PD-695</b>, que tiene zonas separadas para continua y alterna y bornes 20 A y mA.</p>
         </div>
@@ -193,7 +194,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="I" n={1} />
           <h2>Ajusta la fuente</h2>
-          <Enun n="1">Encender y ajustar la fuente de alimentación en modo independiente para que se obtengan dos fuentes de tensión separadas de 6 V (S₁) y 9 V (S₂). Tener en cuenta que existe un mando de ajuste «grueso» (4 para S₁ y 17 para S₂), que producirá grandes variaciones de tensión y un mando de ajuste «fino» (5 para S₁ y 16 para S₂) que producirá variaciones pequeñas.</Enun>
+          <Enun n="1" fold>Encender y ajustar la fuente de alimentación en modo independiente para que se obtengan dos fuentes de tensión separadas de 6 V (S₁) y 9 V (S₂). Tener en cuenta que existe un mando de ajuste «grueso» (4 para S₁ y 17 para S₂), que producirá grandes variaciones de tensión y un mando de ajuste «fino» (5 para S₁ y 16 para S₂) que producirá variaciones pequeñas.</Enun>
           <OrigEnun files={ORIG.I} block="I" />
           <Guide guide={G.f69} />
         </div>
@@ -208,7 +209,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="I" n={2} />
           <h2>Mide las salidas</h2>
-          <Enun n="2">Medir con el multímetro Keysight U1232A la tensión proporcionada entre los terminales 7 y 8, entre los terminales 13 y 14, y entre los terminales 10 y 11. Rellenar la Tabla 2.3. En todos los casos elegir el mejor fondo de escala, escribir todas las cifras que aparecen en pantalla e indicar las unidades.</Enun>
+          <Enun n="2" fold>Medir con el multímetro Keysight U1232A la tensión proporcionada entre los terminales 7 y 8, entre los terminales 13 y 14, y entre los terminales 10 y 11. Rellenar la Tabla 2.3. En todos los casos elegir el mejor fondo de escala, escribir todas las cifras que aparecen en pantalla e indicar las unidades.</Enun>
           <Guide guide={G.outputs} />
           <TerminalMeter id="m1" rows={TERMS_I} />
         </div>
@@ -221,7 +222,7 @@ export const SLIDES = [
     ),
   },
   {
-    group: 'I', title: 'Bloque I · 3 ¿Coinciden?', audio: '09-b1-coinciden', steps: 2,
+    group: 'I', title: 'Bloque I · 3 ¿Coinciden?', audio: '09-b1-coinciden', steps: 3,
     body: (step) => (
       <div className="wrap">
         <div className="copy">
@@ -232,6 +233,7 @@ export const SLIDES = [
           <Steps step={step} items={[
             ['1', <><b>Casi, pero no del todo.</b> La fuente marca una cifra decimal y el multímetro, dos.</>],
             ['2', <><b>Fíate del multímetro.</b> Tiene mejor resolución y mide lo que llega de verdad a los bornes. El voltímetro de la fuente sirve de orientación.</>],
+            ['3', <><b>Con su incertidumbre.</b> En el fondo de 40 V, 6,02 V es (6,02 ± 0,04) V: la diferencia con la fuente es de centésimas, menor que la décima que muestra su pantalla.</>],
           ]} />
         </div>
         <div className="vis"><ResultTable id="t23" /></div>
@@ -245,7 +247,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="I" n={4} />
           <h2>¿Y los terminales 10 y 11?</h2>
-          <Enun n="4">¿Varía la tensión entre los terminales 10 y 11 al variar los mandos de tensión de las fuentes S₁ o S₂? Razonar por qué.</Enun>
+          <Enun n="4" fold>¿Varía la tensión entre los terminales 10 y 11 al variar los mandos de tensión de las fuentes S₁ o S₂? Razonar por qué.</Enun>
           <Guide guide={G.five} />
           <FivePredict />
           <div style={{ marginTop: 12 }}><TerminalMeter id="m1" rows={TERMS_I} /></div>
@@ -272,7 +274,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={1} />
           <h2>Identifica las resistencias</h2>
-          <Enun n="1">Identificar todos los componentes pasivos del circuito según el código de colores, en este caso las resistencias R₁, R₂, R₃, R₄ y R₅. Comprobar que sus valores sean correctos midiéndolos con el multímetro, en este caso se utilice el Keysight. Rellene la Tabla 2.4.</Enun>
+          <Enun n="1" fold>Identificar todos los componentes pasivos del circuito según el código de colores, en este caso las resistencias R₁, R₂, R₃, R₄ y R₅. Comprobar que sus valores sean correctos midiéndolos con el multímetro, en este caso se utilice el Keysight. Rellene la Tabla 2.4.</Enun>
           <OrigEnun files={ORIG.II} block="II" />
           <Guide guide={G.res} />
           <ResistorMeter id="m2" />
@@ -313,9 +315,9 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={3} />
           <h2>Monta las resistencias</h2>
-          <Enun n="3">Comenzar montando sobre la placa de pruebas los componentes pasivos del circuito, en este caso las resistencias R₁, R₂, R₃, R₄ y R₅ (no encender la fuente hasta el final). Intentar que la disposición de los elementos sea todo lo parecida posible al dibujo de la Figura 2.5 empezando por la izquierda de la placa de pruebas. Dibujar el montaje realizado.</Enun>
-          <Fig src="Figura-2.5-Circuito.png" alt="Figura 2.5: R1 en serie con R2 y R3 en paralelo, y con R4 y R5 en paralelo" />
+          <Enun n="3" fold>Comenzar montando sobre la placa de pruebas los componentes pasivos del circuito, en este caso las resistencias R₁, R₂, R₃, R₄ y R₅ (no encender la fuente hasta el final). Intentar que la disposición de los elementos sea todo lo parecida posible al dibujo de la Figura 2.5 empezando por la izquierda de la placa de pruebas. Dibujar el montaje realizado.</Enun>
           <Guide guide={G.build2} />
+          <Fig src="Figura-2.5-Circuito.png" alt="Figura 2.5: R1 en serie con R2 y R3 en paralelo, y con R4 y R5 en paralelo" />
         </div>
         <div className="vis"><Bench id="m2" tools={BUILD2} target="II" /></div>
       </div>
@@ -328,7 +330,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={4} />
           <h2>Fija la tensión en vacío</h2>
-          <Enun n="4">Encender la fuente de alimentación y, en vacío (antes de conectarla al circuito), seleccionar los valores de tensión deseados. Usar el modo independiente.</Enun>
+          <Enun n="4" fold>Encender la fuente de alimentación y, en vacío (antes de conectarla al circuito), seleccionar los valores de tensión deseados. Usar el modo independiente.</Enun>
           <p className="note">La Figura 2.5 pide Eg = 25 V. Con S₁ basta: llega a 30 V.</p>
           <Guide guide={G.f25} />
         </div>
@@ -343,7 +345,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={5} />
           <h2>Conecta la fuente</h2>
-          <Enun n="5">Conectar la fuente de alimentación al circuito, empleando los cables y pinzas de cocodrilo que sean necesarios. Conviene elegir el color de los cables respetando el convenio habitual (rojo para el positivo y negro para el negativo o tierra).</Enun>
+          <Enun n="5" fold>Conectar la fuente de alimentación al circuito, empleando los cables y pinzas de cocodrilo que sean necesarios. Conviene elegir el color de los cables respetando el convenio habitual (rojo para el positivo y negro para el negativo o tierra).</Enun>
           <p className="note">Pinza + en el nodo A y pinza − en el nodo D.</p>
           <Guide guide={G.connect2} />
         </div>
@@ -358,12 +360,12 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={6} />
           <h2>Prepara el multímetro</h2>
-          <Enun n="6">Preparar el multímetro para realizar las medidas necesarias. En este caso se medirá corriente (amperios, A) en corriente continua. Comprobar que la rueda del selector se encuentra dentro de la zona correspondiente a corrientes (A) y que el cable negro sale del terminal COM. En la parte izquierda de la pantalla del multímetro debe aparecer DC lo que significa que se van a realizar medidas de corriente continua (AC es para corriente alterna). Si no es así pulsar el botón AC/DC. En cuanto a la selección de escala, lo más prudente es comenzar seleccionando el fondo de 20 A, conectando el cable rojo en el terminal 20 A. Después, si la medida tomada resulta ser inferior a 2 A (2000 mA), se puede conectar el cable rojo al terminal µA mA y elegir un fondo de escala menor. De este modo no se pone en riesgo de sobrecarga al amperímetro.</Enun>
+          <Enun n="6" fold>Preparar el multímetro para realizar las medidas necesarias. En este caso se medirá corriente (amperios, A) en corriente continua. Comprobar que la rueda del selector se encuentra dentro de la zona correspondiente a corrientes (A) y que el cable negro sale del terminal COM. En la parte izquierda de la pantalla del multímetro debe aparecer DC lo que significa que se van a realizar medidas de corriente continua (AC es para corriente alterna). Si no es así pulsar el botón AC/DC. En cuanto a la selección de escala, lo más prudente es comenzar seleccionando el fondo de 20 A, conectando el cable rojo en el terminal 20 A. Después, si la medida tomada resulta ser inferior a 2 A (2000 mA), se puede conectar el cable rojo al terminal µA mA y elegir un fondo de escala menor. De este modo no se pone en riesgo de sobrecarga al amperímetro.</Enun>
+          <Guide guide={G.prep} />
           <p className="note">En el PD-695 no hay botón AC/DC: continua y alterna son zonas distintas del selector. Su borne pequeño es <b>mA</b>, con fondos de 400 mA y 40 mA.</p>
         </div>
         <div className="vis">
           <BenchMeter id="m2" />
-          <Guide guide={G.prep} />
         </div>
       </div>
     ),
@@ -375,12 +377,12 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={7} />
           <h2>Abre cada rama y mide</h2>
+          <Enun n="7" fold>Medida de corrientes. Es necesario abrir el circuito por cada una de las ramas alternativamente, y conectar el multímetro para volver a cerrar la rama que hemos abierto para medir la intensidad de su corriente al hacer que atraviese el amperímetro. Tener cuidado con que la corriente que se quiere medir entre por el positivo del amperímetro (poniendo el terminal positivo -rojo- en la parte más cercana al terminal positivo -rojo- de la fuente). ¿Qué pasa si la corriente que se quiere medir entra por el negativo del amperímetro?</Enun>
+          <Guide guide={G.cur2} />
           <BenchMeter id="m2" />
         </div>
         <div className="vis">
-          <Enun n="7">Medida de corrientes. Es necesario abrir el circuito por cada una de las ramas alternativamente, y conectar el multímetro para volver a cerrar la rama que hemos abierto para medir la intensidad de su corriente al hacer que atraviese el amperímetro. Tener cuidado con que la corriente que se quiere medir entre por el positivo del amperímetro (poniendo el terminal positivo -rojo- en la parte más cercana al terminal positivo -rojo- de la fuente). ¿Qué pasa si la corriente que se quiere medir entra por el negativo del amperímetro?</Enun>
-          <Guide guide={G.cur2} />
-          <BenchReadout id="m2" />
+          <BenchReadout id="m2" always />
           <Bench id="m2" tools={MEASURE} target="II" />
           <CurrentLog id="m2" keys={CUR_II} target="II" />
           {AMP_NOTE}
@@ -417,10 +419,10 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="II" n={8} />
           <h2>Tabla 2.5</h2>
-          <Enun n="8">Rellenar la Tabla 2.5 con las medidas y los valores teóricos esperados calculados en las actividades previas. En todos los casos elegir el mejor fondo de escala, escribir todas las cifras que aparecen en pantalla e indicar las unidades.</Enun>
+          <Enun n="8" fold>Rellenar la Tabla 2.5 con las medidas y los valores teóricos esperados calculados en las actividades previas. En todos los casos elegir el mejor fondo de escala, escribir todas las cifras que aparecen en pantalla e indicar las unidades.</Enun>
           <Guide guide={G.t25} />
           <ResultTable id="t25" />
-          <p className="note" style={{ marginTop: 14 }}><b>IR₅ apenas se puede medir:</b> vale unos 8,9 µA y, en el fondo de 40 mA, la resolución es 0,01 mA. La pantalla marca una sola cuenta: es lo máximo que da este fondo.</p>
+          <p className="note" style={{ marginTop: 14 }}><b>IR₅ apenas se puede medir:</b> vale unos 8,9 µA y, en el fondo de 40 mA, la resolución es 0,01 mA. La pantalla marca una sola cuenta: (0,01 ± 0,01) mA. Con su incertidumbre, la medida es compatible con el valor teórico.</p>
         </div>
       </div>
     ),
@@ -438,7 +440,7 @@ export const SLIDES = [
             ['C', <><b>Nodo C.</b> Lo que llega por R₂ y R₃ sale por R₄ y R₅.</>],
           ]} />
           <div {...at(step, 2, 'frag')}><KclCheck id="m2" eqs={[{ node: 'Nodo B', ins: ['IR1'], outs: ['IR2', 'IR3'] }, { node: 'Nodo C', ins: ['IR2', 'IR3'], outs: ['IR4', 'IR5'] }]} /></div>
-          <p {...at(step, 2, 'note frag')}>Las sumas pueden diferir en la última cifra: cada lectura tiene su incertidumbre.</p>
+          <p {...at(step, 2, 'note frag')}>Las sumas pueden diferir en la última cifra. La ley se confirma si la diferencia cabe en la suma de las incertidumbres de las lecturas, cada una ±(0,5 % + 1 dígito).</p>
         </div>
         <div className="vis"><div className="panel"><SchCircuit flow /></div></div>
       </div>
@@ -462,10 +464,10 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="III" n={1} />
           <h2>Monta el divisor</h2>
-          <Enun n="1">Montar el circuito sobre la placa de pruebas con la resistencia R₆ = 100 kΩ.</Enun>
-          <Fig src="Figura-2.6-Divisor.png" alt="Figura 2.6: R3 y R6 en paralelo conectadas a la fuente Eg" />
+          <Enun n="1" fold>Montar el circuito sobre la placa de pruebas con la resistencia R₆ = 100 kΩ.</Enun>
           <OrigEnun files={ORIG.III} block="III" />
           <Guide guide={G.build3} />
+          <Fig src="Figura-2.6-Divisor.png" alt="Figura 2.6: R3 y R6 en paralelo conectadas a la fuente Eg" />
         </div>
         <div className="vis"><Bench id="m3" tools={BUILD3} target="III" /></div>
       </div>
@@ -478,7 +480,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="III" n={2} />
           <h2>Más de 30 V: modo serie</h2>
-          <Enun n="2">Para alimentar la asociación de resistencias se necesita una tensión superior a 30 V. Será necesario, pues, emplear la fuente de alimentación en modo serie (es recomendable emplear tensiones del mismo orden en ambas salidas). En caso de duda, revisar cómo utilizar los distintos modos de operación de la fuente de alimentación explicados en el contenido introductorio. Una vez seleccionadas las tensiones, anotar sus valores en las casillas de la Tabla 2.6.</Enun>
+          <Enun n="2" fold>Para alimentar la asociación de resistencias se necesita una tensión superior a 30 V. Será necesario, pues, emplear la fuente de alimentación en modo serie (es recomendable emplear tensiones del mismo orden en ambas salidas). En caso de duda, revisar cómo utilizar los distintos modos de operación de la fuente de alimentación explicados en el contenido introductorio. Una vez seleccionadas las tensiones, anotar sus valores en las casillas de la Tabla 2.6.</Enun>
           <Guide guide={G.series} />
           <div style={{ marginTop: 12 }}><TerminalMeter id="m3" rows={TERMS_III} /></div>
         </div>
@@ -496,12 +498,12 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="III" n={3} />
           <h2>Mide las tres corrientes</h2>
+          <Enun n="3" fold>Siguiendo el mismo procedimiento que en el ejercicio anterior para la medida de corrientes, medir las intensidades de corriente a la salida del generador y en las ramas de las resistencias R₃ y R₆, anotar las intensidades medidas en la Tabla 2.6. Nota: en todos los casos elegir el mejor fondo de escala, escribir todas las cifras que aparecen en pantalla e indicar las unidades.</Enun>
+          <Guide guide={G.cur3} />
           <BenchMeter id="m3" />
         </div>
         <div className="vis">
-          <Enun n="3">Siguiendo el mismo procedimiento que en el ejercicio anterior para la medida de corrientes, medir las intensidades de corriente a la salida del generador y en las ramas de las resistencias R₃ y R₆, anotar las intensidades medidas en la Tabla 2.6. Nota: en todos los casos elegir el mejor fondo de escala, escribir todas las cifras que aparecen en pantalla e indicar las unidades.</Enun>
-          <Guide guide={G.cur3} />
-          <BenchReadout id="m3" />
+          <BenchReadout id="m3" always />
           <Bench id="m3" tools={MEASURE} target="III" />
           <CurrentLog id="m3" keys={CUR_III} target="III" />
           {AMP_NOTE}
@@ -536,7 +538,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="III" n={3} />
           <h2>Tabla 2.6</h2>
-          <Enun n="3">Anotar las intensidades medidas en la Tabla 2.6.</Enun>
+          <Enun n="3" fold>Anotar las intensidades medidas en la Tabla 2.6.</Enun>
           <Guide guide={G.t26} />
           <ResultTable id="t26" />
         </div>
@@ -565,9 +567,9 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="III" n={5} />
           <h2>Añade los LEDs</h2>
-          <Enun n="5">Para visualizar las corrientes que fluyen en las resistencias R₃ y R₆ vamos a añadir unos diodos que al recibir corriente eléctrica emiten luz (LED) como se muestra en la Figura 2.7. Para que el LED funcione y emita luz, la corriente debe fluir del ánodo (positivo, +) al cátodo (negativo, −). En este caso, el terminal positivo debe quedar a la izquierda, conectado a R₃ y R₆. Puedes identificar el ánodo porque tiene la pata más larga. Revise cómo utilizar los LEDs en el contenido introductorio.</Enun>
-          <Fig src="Figura-2.7-LEDs.png" alt="Figura 2.7: un LED en serie con R3 y otro en serie con R6" />
+          <Enun n="5" fold>Para visualizar las corrientes que fluyen en las resistencias R₃ y R₆ vamos a añadir unos diodos que al recibir corriente eléctrica emiten luz (LED) como se muestra en la Figura 2.7. Para que el LED funcione y emita luz, la corriente debe fluir del ánodo (positivo, +) al cátodo (negativo, −). En este caso, el terminal positivo debe quedar a la izquierda, conectado a R₃ y R₆. Puedes identificar el ánodo porque tiene la pata más larga. Revise cómo utilizar los LEDs en el contenido introductorio.</Enun>
           <Guide guide={G.leds} />
+          <Fig src="Figura-2.7-LEDs.png" alt="Figura 2.7: un LED en serie con R3 y otro en serie con R6" />
         </div>
         <div className="vis">
           <Bench id="m3" tools={LEDS} target="IIIL" />
@@ -583,7 +585,7 @@ export const SLIDES = [
         <div className="copy">
           <ActTrack m="III" n={6} />
           <h2>Cambia R₆ y mira los LEDs</h2>
-          <Enun n="6">Vamos a observar cómo varía la intensidad luminosa de los LEDs al cambiar el valor de la resistencia R₆. Para eso consideramos los tres casos analizados en las actividades previas: R₆ = 3k3 Ω, 100 kΩ, 2M2 Ω.</Enun>
+          <Enun n="6" fold>Vamos a observar cómo varía la intensidad luminosa de los LEDs al cambiar el valor de la resistencia R₆. Para eso consideramos los tres casos analizados en las actividades previas: R₆ = 3k3 Ω, 100 kΩ, 2M2 Ω.</Enun>
           <Guide guide={G.r6} />
           <LedPredict id="m3" />
         </div>

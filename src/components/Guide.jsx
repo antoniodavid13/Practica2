@@ -1,8 +1,9 @@
 import { useLab } from '../lib/lab'
 
-/* «Qué tienes que hacer»: pasos de la diapositiva que se marcan solos al hacerlos.
+/* «Qué tienes que hacer»: los pasos de la actividad, en orden y todos a la vista.
    guide: función de lib/guides.js que devuelve los pasos a partir del estado del laboratorio.
-   Compacta: se ve el paso actual, su pista y el siguiente; la lista entera queda plegada. */
+   Cada paso dice qué hacer y, debajo, por qué (`why`). Se marcan solos al hacerlos; el actual se resalta
+   y lleva su explicación y su pista. Los hechos se compactan a una línea para que el actual quede siempre a la vista. */
 export function Guide({ guide }) {
   const { lab } = useLab()
   const steps = guide(lab)
@@ -12,7 +13,7 @@ export function Guide({ guide }) {
   const cur = done ? -1 : steps.findIndex((s) => s.ok === false)
   const state = (s, i) => (done || s.ok === true || (s.ok === undefined && i < cur) ? 'done' : i === cur ? 'cur' : 'todo')
   const n = steps.filter((s, i) => state(s, i) === 'done').length
-  const now = steps[cur], next = steps.slice(cur + 1).find((s) => s.ok !== true)
+  const now = steps[cur]
   return (
     <div className={`guide${done ? ' ok' : ''}`}>
       <div className="guide-head">
@@ -20,28 +21,23 @@ export function Guide({ guide }) {
         <span className="mono">{n}/{steps.length}</span>
       </div>
       <div className="guide-bar" aria-hidden="true"><i style={{ width: `${(n / steps.length) * 100}%` }} /></div>
-      {now && (
-        <div className="guide-now" aria-live="polite">
-          <span className="guide-k" aria-hidden="true">{cur + 1}</span>
-          <span>{now.t}</span>
-        </div>
-      )}
-      {now?.hint && <p className="guide-hint"><b>Pista:</b> {now.hint}</p>}
-      {next && <p className="guide-next">Después: {next.t}</p>}
-      <details className="guide-all">
-        <summary>Ver todos los pasos</summary>
-        <ol className="guide-steps">
-          {steps.map((s, i) => {
-            const st = state(s, i)
-            return (
-              <li key={i} className={st} aria-current={st === 'cur' ? 'step' : undefined}>
-                <span className="guide-k" aria-hidden="true">{st === 'done' ? '✓' : i + 1}</span>
-                <span>{s.t}</span>
-              </li>
-            )
-          })}
-        </ol>
-      </details>
+      {/* Para lectores de pantalla: se anuncia el paso actual cada vez que cambia */}
+      <p className="sr-only" aria-live="polite">{now ? `Paso ${cur + 1}: ${now.t}` : done ? 'Actividad completada' : ''}</p>
+      <ol className="guide-steps">
+        {steps.map((s, i) => {
+          const st = state(s, i)
+          return (
+            <li key={i} className={st} aria-current={st === 'cur' ? 'step' : undefined}>
+              <span className="guide-k" aria-hidden="true">{st === 'done' ? '✓' : i + 1}</span>
+              <div className="guide-body">
+                <p className="guide-t">{s.t}</p>
+                {s.why && st === 'cur' && <p className="guide-why"><b>Por qué:</b> {s.why}</p>}
+                {st === 'cur' && s.hint && <p className="guide-hint"><b>Pista:</b> {s.hint}</p>}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
     </div>
   )
 }
