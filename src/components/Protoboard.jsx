@@ -59,6 +59,7 @@ const Strip = ({ node, cls }) => {
   return <rect className={cls} x={r.x} y={r.y} width={r.w} height={r.h} rx="6" />
 }
 
+// Resistencia. Quemada: cuerpo ennegrecido y con un aspa
 function Resistor({ p, onClick }) {
   const a = HOLE.get(p.a), b = HOLE.get(p.b)
   const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy)
@@ -68,15 +69,16 @@ function Resistor({ p, onClick }) {
   const nx = -dy / len, ny = dx / len, side = nx > 0 || (nx === 0 && ny < 0) ? 1 : -1
   const lx = mx + nx * 15 * side, ly = my + ny * 15 * side + 4
   return (
-    <g className={`pb-part${onClick ? ' erasable' : ''}`} onClick={onClick}>
+    <g className={`pb-part${onClick ? ' erasable' : ''}${p.burnt ? ' burnt' : ''}`} onClick={onClick}>
       <line className="pb-leg-hit" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
       <line className="pb-leg" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
       <circle className="pb-pin" cx={a.x} cy={a.y} r="2.2" /><circle className="pb-pin" cx={b.x} cy={b.y} r="2.2" />
       <g transform={`translate(${mx} ${my}) rotate(${ang})`}>
         <rect className="pb-body" x={-L / 2} y="-5" width={L} height="10" rx="5" />
         {BANDS[p.as ?? p.k].map((c, i) => (
-          <rect key={i} x={L * [-0.3, -0.13, 0.04, 0.27][i]} y="-5" width={L * 0.08} height="10" style={{ fill: `var(--band-${c})` }} />
+          <rect key={i} className="pb-band" x={L * [-0.3, -0.13, 0.04, 0.27][i]} y="-5" width={L * 0.08} height="10" style={{ fill: `var(--band-${c})` }} />
         ))}
+        {p.burnt && <path className="pb-led-x" d="M-4 -4 L4 4 M4 -4 L-4 4" />}
       </g>
       <text className="pb-lbl" style={{ fill: `var(--${p.k})` }} x={lx} y={ly} textAnchor="middle">{RES_NAME[p.k]}</text>
     </g>
@@ -96,7 +98,7 @@ function Wire({ p, color, onClick }) {
   )
 }
 
-// LED: la pata `a` es el ánodo (+). El halo crece con la corriente
+// LED: la pata `a` es el ánodo (+). El halo crece con la corriente. Estropeado: gris y con un aspa
 function Led({ p, state, onClick }) {
   const a = HOLE.get(p.a), b = HOLE.get(p.b)
   const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
@@ -107,7 +109,8 @@ function Led({ p, state, onClick }) {
       <line className="pb-leg" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
       <circle className="pb-pin" cx={a.x} cy={a.y} r="2.2" /><circle className="pb-pin" cx={b.x} cy={b.y} r="2.2" />
       <circle className="pb-led-glow" cx={mx} cy={my} r="17" style={{ opacity: lit * 0.75 }} />
-      <circle className="pb-led" cx={mx} cy={my} r="6.5" style={{ '--lit': `${Math.round(lit * 100)}%` }} />
+      <circle className={`pb-led${state?.broken ? ' broken' : ''}`} cx={mx} cy={my} r="6.5" style={{ '--lit': `${Math.round(lit * 100)}%` }} />
+      {state?.broken && <path className="pb-led-x" d={`M${mx - 4} ${my - 4} L${mx + 4} ${my + 4} M${mx + 4} ${my - 4} L${mx - 4} ${my + 4}`} />}
       <text className="pb-lbl" style={{ fill: 'var(--led)' }} x={a.x + (b.x - a.x) * 0.2} y={a.y + (b.y - a.y) * 0.2 - 7} textAnchor="middle">+</text>
     </g>
   )

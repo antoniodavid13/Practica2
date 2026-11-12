@@ -3,6 +3,7 @@ import { SLIDES } from './Slides'
 import { PrintSheet, ThemeToggle } from './components/Widgets'
 import { Narrator } from './components/Narrator'
 import { LabContext, loadLab, saveLab } from './lib/lab'
+import { settle } from './lib/practice'
 
 /* ================= Motor de diapositivas ================= */
 const N = SLIDES.length
@@ -48,7 +49,9 @@ export default function App() {
   const { cur, steps } = nav
   const step = steps[cur], max = MAX[cur]
   const touch = useRef(null)
-  const [lab, setLab] = useState(loadLab)
+  const [lab, setRaw] = useState(() => settle(loadLab()))
+  // Tras cada cambio se aplican sus consecuencias: un fusible fundido o un LED estropeado
+  const setLab = (fn) => setRaw((l) => settle(typeof fn === 'function' ? fn(l) : fn))
   useEffect(() => { saveLab(lab) }, [lab])
 
   useEffect(() => {

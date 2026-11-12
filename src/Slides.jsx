@@ -148,7 +148,7 @@ export const SLIDES = [
           <Steps step={step} items={[
             ['1', <><b>Tensión.</b> Selector en <b>V⎓</b>, cable rojo en <b>VΩHz</b>. Las puntas se apoyan en paralelo.</>],
             ['2', <><b>Corriente.</b> Selector en <b>A⎓</b>, cable rojo en <b>20 A</b> o en <b>mA</b>. Va siempre <b>en serie</b>.</>],
-            ['3', <><b>Empieza por 20 A.</b> Si la medida es pequeña, pasa el cable a mA y elige un fondo menor.</>],
+            ['3', <><b>Empieza por 20 A.</b> Si la medida es pequeña, pasa el cable a mA y elige un fondo menor. Una corriente grande por el borne mA funde su fusible.</>],
             ['4', <><b>Signo.</b> Lee la corriente que entra por la punta roja y sale por la negra.</>],
           ]} />
           <p className="note" style={{ marginTop: 16 }}>El guion cita el <b>Promax PD-181</b> y el <b>Keysight U1232A</b>. Aquí todas las medidas se hacen con el <b>PD-695</b>, que tiene zonas separadas para continua y alterna y bornes 20 A y mA.</p>

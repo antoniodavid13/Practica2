@@ -1,7 +1,7 @@
 import { REAL, RES_NAME, checkBench } from './board.js'
 import { fmt } from './circuit.js'
 import { DIAL, bestOhm, readout } from './meter.js'
-import { TABLES, branchOf, evalRow, jackOk, measureBench, setpoint, toNum } from './practice.js'
+import { TABLES, branchOf, evalRow, jackOk, measureBench, parallelTo, setpoint, toNum } from './practice.js'
 
 /* ================= Guías paso a paso =================
    Cada guía es una función del estado del laboratorio que devuelve los pasos de una diapositiva:
@@ -154,12 +154,20 @@ export const currentGuide = (id, keys, need) => (lab) => {
       ok: an.powered,
       hint: !s.on ? 'La fuente está apagada: enciéndela en su diapositiva.' : !b.src?.pos || !b.src?.neg ? 'Faltan las pinzas de la fuente en la placa.' : 'Revisa el montaje y la tensión de la fuente.',
     },
-    { t: 'Multímetro como amperímetro: selector en A⎓ y cable rojo en su borne (20 A o mA).', ok: amm, hint: p.g === 'adc' && !jackOk(b) ? `Con ${p.name}, el cable rojo va en ${p.name === '20 A' ? '20A' : 'mA'}.` : null },
+    {
+      t: 'Multímetro como amperímetro: selector en A⎓ y cable rojo en su borne (20 A o mA).',
+      ok: amm && !(b.fuse && b.jack === 'mA'),
+      hint: b.fuse && b.jack === 'mA' ? 'El fusible del borne mA está fundido: pulsa «Cambiar el fusible» en el multímetro.'
+        : p.g === 'adc' && !jackOk(b) ? `Con ${p.name}, el cable rojo va en ${p.name === '20 A' ? '20A' : 'mA'}.` : null,
+    },
     { t: 'Abre una rama: pulsa uno de los botones «Abrir…» de abajo, o levanta una pata con «Mover pata».' },
     {
       t: 'Cierra la rama con las puntas: elige «Punta roja» y pulsa el lado más cercano al + de la fuente; después «Punta negra» al otro lado.',
-      ok: amm && !!el && !an.short,
-      hint: an.short ? 'Cortocircuito: las puntas están en paralelo con la fuente. Quítalas y ponlas en la rama abierta.' : !b.red || !b.black ? 'Faltan puntas por colocar.' : !el ? 'Las puntas no están en serie: deben cerrar el hueco que dejaste al abrir la rama.' : null,
+      ok: amm && !!el && !an.limited,
+      hint: an.limited ? 'Cortocircuito: la fuente está limitando la corriente. Si las puntas están en paralelo con la fuente, quítalas y ponlas en la rama abierta.'
+        : !b.red || !b.black ? 'Faltan puntas por colocar.'
+          : !el && parallelTo(b).length ? 'Las puntas están en paralelo con una resistencia y la cortocircuitan. Abre su rama y cierra el hueco con las puntas.'
+            : !el ? 'Las puntas no están en serie: deben cerrar el hueco que dejaste al abrir la rama.' : null,
     },
     {
       t: 'Baja al fondo de 40 mA con el cable rojo en mA: la corriente es de miliamperios.',
@@ -190,7 +198,7 @@ export const ledGuide = (lab) => {
   return [
     { t: 'Quita las puntas del multímetro: herramienta «Quitar» y pulsa cada punta.', ok: !b.red && !b.black },
     { t: 'Abre la rama de R₃ con «Mover pata» para dejar sitio al LED.' },
-    { t: 'Elige «LED de R₃»: pulsa primero el agujero del ánodo (+, el lado de R₃) y después el del cátodo (−).', ok: has('led1') },
+    { t: 'Elige «LED de R₃»: pulsa primero el agujero del ánodo (+, el lado de R₃) y después el del cátodo (−). Al revés, con 36 V, el LED se estropea.', ok: has('led1') },
     { t: 'Haz lo mismo en la rama de R₆ con «LED de R₆».', ok: has('led2') },
     { t: 'Comprueba que todo queda en verde y que los dos LEDs lucen.', ok: checkBench(b, 'IIIL', true).ok, hint: firstBad(b, 'IIIL', true), final: true },
   ]

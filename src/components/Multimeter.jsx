@@ -12,8 +12,9 @@ const JACK_NAME = { V: 'VΩHz', mA: 'mA', '20A': '20 A' }
 const ZONES = [['V⎓', 2, 'vdc'], ['A⎓', 7, 'adc'], ['Ω', 17, 'ohm']]
 const list = { vdc: VDC, adc: ADC, ohm: OHM }
 
-function advice(r, p, m, jack, probes, right) {
+function advice(r, p, m, jack, probes, right, fuse) {
   if (r.kind === 'off') return [null, 'Multímetro apagado. Pulsa POWER.']
+  if (fuse && jack === 'mA') return [['bad', 'FUSIBLE'], 'El fusible del borne mA se ha fundido: pasó por él mucha más corriente de la que admite. El amperímetro ya no cierra el circuito y marca 0. Cámbialo antes de seguir midiendo en mA.']
   if (r.kind === 'na') return [null, 'Función no simulada. Gira el selector a la zona V, A o Ω.']
   if (r.ac) return [null, 'Estás en alterna y el circuito es de continua. Gira el selector a la zona de continua.']
   if (!right) {
@@ -39,11 +40,13 @@ function advice(r, p, m, jack, probes, right) {
 }
 
 /* Multímetro virtual Promax PD-695: pantalla, POWER, selector giratorio y bornes.
-   Las puntas se colocan en la placa; aquí se elige la función, el fondo de escala y el borne del cable rojo. */
-export function Multimeter({ dial, power, m, jack, probes, right, onDial, onPower, onJack }) {
+   Las puntas se colocan en la placa; aquí se elige la función, el fondo de escala y el borne del cable rojo.
+   fuse: fusible del borne mA fundido; onFuse: cambiarlo.
+   alarm: [distintivo, texto] que sustituye al consejo cuando el montaje hace que la lectura no valga (un cortocircuito). */
+export function Multimeter({ dial, power, m, jack, probes, right, fuse, alarm, onDial, onPower, onJack, onFuse }) {
   const r = reading(dial, m, power)
   const p = { ...DIAL[dial], i: dial }
-  const [badge, note] = advice(r, p, m, jack, probes, right)
+  const [badge, note] = (power && right && alarm) || advice(r, p, m, jack, probes, right, fuse)
   const turn = (d) => onDial((dial + d + DIAL.length) % DIAL.length)
   const ang = dialAngle(dial)
   const fondos = list[p.g] ?? null
@@ -97,7 +100,7 @@ export function Multimeter({ dial, power, m, jack, probes, right, onDial, onPowe
         </g>
         {/* Bornes */}
         {JACKS.map(([t, x, c, id]) => (
-          <g key={t} className={`dmm-jack ${c}`} onClick={id ? () => onJack(id) : undefined} style={id ? { cursor: 'pointer' } : undefined}>
+          <g key={t} className={`dmm-jack ${c}${fuse && id === 'mA' ? ' blown' : ''}`} onClick={id ? () => onJack(id) : undefined} style={id ? { cursor: 'pointer' } : undefined}>
             <text x={x} y="430" textAnchor="middle">{t}</text>
             <circle className="ring" cx={x} cy="450" r="13" />
             <circle className="hole" cx={x} cy="450" r="7" />
@@ -130,6 +133,9 @@ export function Multimeter({ dial, power, m, jack, probes, right, onDial, onPowe
         </div>
       </div>
       <p className="mnote">{badge && <span className={`badge ${badge[0]}`}>{badge[1]}</span>}<span>{note}</span></p>
+      {fuse && onFuse && (
+        <p className="mnote"><button className="btn sm" type="button" onClick={onFuse}>Cambiar el fusible del borne mA</button></p>
+      )}
     </div>
   )
 }

@@ -10,8 +10,9 @@ const KEY = 'p2-corriente-continua:lab:v1'
 const IDS = ['m1', 'm2', 'm3']
 const TABLES = ['t23', 't24', 't25', 't26']
 
-// jack: borne del cable rojo ('V', 'mA' o '20A'). log: lecturas anotadas. term: salida que se mide en la fuente
-export const emptyBench = () => ({ parts: [], red: null, black: null, src: null, dial: 2, power: true, jack: 'V', log: {}, term: '7-8', pick: 'r1', seen: {} })
+// jack: borne del cable rojo ('V', 'mA' o '20A'). fuse: fusible del borne mA fundido.
+// log: lecturas anotadas. term: salida que se mide en la fuente
+export const emptyBench = () => ({ parts: [], red: null, black: null, src: null, dial: 2, power: true, jack: 'V', fuse: false, log: {}, term: '7-8', pick: 'r1', seen: {} })
 export const emptySupply = () => ({ on: false, mode: 'indep', s1: { c: 0, f: 0 }, s2: { c: 0, f: 0 }, vSel: 's1', aSel: 's1' })
 export const freshLab = () => ({
   supply: emptySupply(),

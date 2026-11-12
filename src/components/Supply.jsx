@@ -45,8 +45,9 @@ function paintLed(s, text, on) {
   s.tex.needsUpdate = true
 }
 
-/* Modelo 3D. leads: bornes con clavija ({ '7': 'red', '8': 'black' }); onTerm: al pulsar un par de bornes */
-function Supply3D({ supply, set, amps, leads, onTerm, onInfo }) {
+/* Modelo 3D. leads: bornes con clavija ({ '7': 'red', '8': 'black' }); onTerm: al pulsar un par de bornes.
+   volts: lo que marca su voltímetro (cae si la fuente limita la corriente) */
+function Supply3D({ supply, set, amps, volts, leads, onTerm, onInfo }) {
   const turnKnob = (k, deg) => {
     const { ch, f } = KNOBS[k]
     set((x) => {
@@ -128,7 +129,7 @@ function Supply3D({ supply, set, amps, leads, onTerm, onInfo }) {
           ease(o, 'position', 'z', z - (on ? 0.0025 : 0))
           o.material.color.copy(base).multiplyScalar(on ? 0.3 : 1)
         }
-        paintLed(extra.dv, display(supply, supply.vSel), supply.on)
+        paintLed(extra.dv, volts, supply.on)
         paintLed(extra.da, amps.toFixed(2), supply.on)
         if (extra.leads !== leadKey) {
           extra.plugs.forEach((p) => { root.remove(p.group); p.dispose() })
@@ -178,12 +179,20 @@ export function Supply({ id, leads, onTerm }) {
   const set = (fn) => setLab((l) => ({ ...l, supply: fn(l.supply) }))
   const an = id ? measureBench(lab[id], supply).an : null
   const amps = supply.on && an?.powered ? Math.min(1, Math.abs(an.ig)) : 0
+  // Limitando la corriente, la salida entrega solo una fracción de lo ajustado: su voltímetro lo refleja
+  const cc = supply.on && an?.powered && an.limited
+  const volts = cc ? (setpoint(supply[supply.vSel]) * an.scale).toFixed(1) : display(supply, supply.vSel)
   // Con una placa conectada, sus cables salen de la salida que la alimenta
   const wires = leads ?? (id && an?.powered ? (supply.mode === 'series' ? { 7: 'red', 14: 'black' } : { 7: 'red', 8: 'black' }) : null)
   return (
     <div className="supply">
-      <Supply3D supply={supply} set={set} amps={amps} leads={wires} onTerm={onTerm} onInfo={setMsg} />
+      <Supply3D supply={supply} set={set} amps={amps} volts={volts} leads={wires} onTerm={onTerm} onInfo={setMsg} />
       {msg && <p className="note supply-msg" aria-live="polite">{msg}</p>}
+      {cc && (
+        <ul className="bench-alerts" aria-live="polite">
+          <li className="bad"><b>Limitación de corriente.</b> Hay un cortocircuito en la placa: la fuente da su máximo, 1 A, y su tensión cae a {fmt(+volts, 1)} V aunque los mandos sigan en {fmt(setpoint(supply[supply.vSel]), 1)} V.</li>
+        </ul>
+      )}
       <div className="supply-row">
         <div className="supply-keys" role="group" aria-label="Interruptor y modo">
           <button type="button" className="supply-key power" aria-pressed={supply.on} onClick={() => set((x) => ({ ...x, on: !x.on }))}>LINE · {supply.on ? 'encendida' : 'apagada'}</button>

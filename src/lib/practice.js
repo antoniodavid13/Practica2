@@ -1,7 +1,7 @@
 import { R, fmt, par } from './circuit.js'
 import { REAL, netFinder, netOfHole, resistance } from './board.js'
 import { DIAL, OHM, bestDc, bestOhm, reading } from './meter.js'
-import { I_MAX, analyze } from './sim.js'
+import { analyze } from './sim.js'
 
 /* ================= Datos y reglas de la Práctica 2 ================= */
 export const E25 = 25, E36 = 36
@@ -165,14 +165,74 @@ export function jackOk(bench) {
   return bench.jack === 'V'
 }
 
+/* Con el cable rojo en 20A o en mA, entre las puntas hay un amperímetro: casi 0 Ω, sea cual sea la posición
+   del selector. Con el fusible del borne mA fundido, ese camino queda abierto. */
+export const ammeterOn = (bench) => bench.jack === '20A' || (bench.jack === 'mA' && !bench.fuse)
+
 export function measureBench(bench, supply) {
-  const ammeter = bench.jack !== 'V'
-  const an = analyze(bench, busVolts(supply), { ammeter, values: valuesOf })
+  const an = analyze(bench, busVolts(supply), { ammeter: ammeterOn(bench), values: valuesOf })
   const right = jackOk(bench)
   const probes = !!(bench.red && bench.black)
-  const clip = (i) => Math.max(-I_MAX, Math.min(I_MAX, i ?? 0))
-  const m = { ohms: right ? resistance(bench) : Infinity, volts: right ? an.volts ?? 0 : 0, amps: right && !an.short ? clip(an.amps) : 0 }
+  // Para el óhmetro, una resistencia quemada tampoco existe: está abierta
+  const ohms = resistance({ ...bench, parts: bench.parts.filter((p) => !p.burnt) })
+  const m = { ohms: right ? ohms : Infinity, volts: right ? an.volts ?? 0 : 0, amps: right ? an.amps ?? 0 : 0 }
   return { an, m, r: reading(bench.dial, m, bench.power), probes, right }
+}
+
+/* ---------- Errores con consecuencias ----------
+   Propuestas, no datos del guion ni del fabricante:
+   - FUSE_MA: el fusible del borne mA se funde por encima de 400 mA, su fondo mayor. No conocemos el valor
+     real del fusible del PD-695, pero con la fuente limitada a 1 A un cortocircuito lo supera igualmente.
+     El borne 20A aguanta: la fuente nunca da más de 1 A.
+   - LED_VR: un LED se estropea con más de 5 V en inversa, la tensión inversa máxima típica. El guion solo
+     dice que «una conexión inversa puede provocar daños permanentes».
+   - P_MAX: una resistencia se quema si disipa más de ½ W. Es la potencia de las de 3,3 kΩ según la ficha;
+     se toma la misma para todas. Con el montaje del guion, la que más disipa es R₃ con 36 V: 0,40 W.
+     Se supera, por ejemplo, con 60 V en el divisor (1,1 W en R₃). */
+export const FUSE_MA = 0.4
+export const LED_VR = 5
+export const P_MAX = 0.5
+
+// Aplica a una placa lo que no tiene vuelta atrás: el fusible fundido, los LEDs estropeados y las resistencias quemadas
+function settleBench(bench, supply) {
+  let b = bench
+  for (let i = 0; i < 4; i++) {
+    const an = analyze(b, busVolts(supply), { ammeter: ammeterOn(b), values: valuesOf })
+    let next = b
+    if (b.jack === 'mA' && !b.fuse && Math.abs(an.amps ?? 0) > FUSE_MA) next = { ...next, fuse: true }
+    const hurt = b.parts.filter((p) => !p.broken && an.led[p.id]?.reverse > LED_VR)
+    if (hurt.length) next = { ...next, parts: next.parts.map((p) => (hurt.includes(p) ? { ...p, broken: Math.round(an.led[p.id].reverse * 10) / 10 } : p)) }
+    // Potencia de cada resistencia: P = I² · R
+    const watts = (p) => (an.current[p.id] ?? 0) ** 2 * valuesOf[p.as ?? p.k]
+    const hot = b.parts.filter((p) => valuesOf[p.as ?? p.k] && !p.burnt && watts(p) > P_MAX)
+    if (hot.length) next = { ...next, parts: next.parts.map((p) => (hot.includes(p) ? { ...p, burnt: Math.round(watts(p) * 100) / 100 } : p)) }
+    if (next === b) return b
+    b = next // Un cambio altera el circuito: se vuelve a comprobar
+  }
+  return b
+}
+// Se aplica tras cada cambio del laboratorio
+export function settle(lab) {
+  let out = lab
+  for (const id of ['m2', 'm3']) {
+    const b = settleBench(lab[id], lab.supply)
+    if (b !== lab[id]) out = { ...out, [id]: b }
+  }
+  return out
+}
+
+// Piezas que quedan en paralelo con las puntas: sus dos patas en los nodos de la roja y la negra.
+// 'src' si las puntas están en paralelo con la fuente.
+export function parallelTo(bench) {
+  const { parts, red, black, src } = bench
+  if (!red || !black) return []
+  const find = netFinder(parts), net = (h) => netOfHole(find, h)
+  const pair = [net(red), net(black)]
+  if (pair[0] === pair[1]) return []
+  const across = (a, b) => (a === pair[0] && b === pair[1]) || (a === pair[1] && b === pair[0])
+  const out = parts.filter((p) => p.k !== 'wire' && across(net(p.a), net(p.b))).map((p) => p.k)
+  if (src?.pos && src?.neg && across(net(src.pos), net(src.neg))) out.push('src')
+  return out
 }
 
 // Rama que mide el amperímetro: un extremo de las puntas debe llegar a un nodo con un solo elemento conectado.

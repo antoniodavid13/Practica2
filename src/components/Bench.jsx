@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
-import { REAL, RES_NAME, SOLUTIONS, checkBench, openBranch } from '../lib/board'
-import { amp, glow } from '../lib/circuit'
+import { REAL, RES_NAME, SOLUTIONS, checkBench, names, openBranch } from '../lib/board'
+import { amp, fmt, glow } from '../lib/circuit'
 import { useLab } from '../lib/lab'
 import { DIAL, reading } from '../lib/meter'
-import { CURRENT_KEY, TERMINALS, UNITS, branchOf, display, fondos, jackOk, measureBench, toNum } from '../lib/practice'
+import {
+  CURRENT_KEY, TERMINALS, UNITS, ammeterOn, branchOf, busVolts, display, fondos, jackOk, measureBench, parallelTo, toNum,
+} from '../lib/practice'
+import { I_MAX } from '../lib/sim'
 import { Protoboard } from './Protoboard'
 import { Multimeter } from './Multimeter'
 import { Quiz } from './Ui'
@@ -138,6 +141,7 @@ export function Bench({ id, tools, target }) {
         <Protoboard parts={bench.parts} red={bench.red} black={bench.black} src={bench.src} leds={an.led} interactive tool={tool}
           pending={pending} onHole={onHole} onPart={removePart} label="Protoboard del montaje" />
       </div>
+      <BenchAlerts bench={bench} supply={supply} an={an} />
       <div className="bench-foot">
         <span className="bench-msg" aria-live="polite">{msg || hint(tool)}</span>
         <span className="acts">
@@ -147,6 +151,34 @@ export function Bench({ id, tools, target }) {
         </span>
       </div>
     </div>
+  )
+}
+
+
+/* Avisos de lo que ha provocado un error: el alumno ve la consecuencia y por qué ha pasado */
+function BenchAlerts({ bench, supply, an }) {
+  const items = []
+  const across = parallelTo(bench), amm = ammeterOn(bench)
+  if (an.powered && an.limited) {
+    const why = an.short ? 'las dos pinzas de la fuente están en el mismo nodo'
+      : amm && across.includes('src') ? 'el amperímetro está en paralelo con la fuente y entre sus puntas casi no hay resistencia'
+        : 'algo une directamente el positivo y el negativo de la fuente'
+    items.push(['bad', 'La fuente está limitando la corriente.', `Hay un cortocircuito: ${why}. El circuito pide más de ${fmt(I_MAX, 0)} A, así que la fuente pasa a corriente constante y su tensión cae a ${fmt(busVolts(supply) * an.scale, 2)} V. El resto del circuito se queda casi sin tensión.`])
+  }
+  if (bench.fuse && bench.jack === 'mA')
+    items.push(['bad', 'Fusible del borne mA fundido.', 'Por el amperímetro pasó mucha más corriente de la que admite ese borne. Ahora no cierra el circuito y marca 0. Cámbialo en el multímetro. Por eso conviene empezar en 20 A: la fuente nunca da tanta corriente como para fundir ese fusible.'])
+  for (const p of bench.parts.filter((x) => x.burnt))
+    items.push(['bad', `${RES_NAME[p.k]} quemada.`, `Disipaba ${fmt(p.burnt, 2)} W y solo aguanta ½ W (P = V² / R). Ahora es un circuito abierto: por su rama ya no pasa corriente. Baja la tensión de la fuente, quítala con «Quitar» y pon una nueva.`])
+  for (const p of bench.parts.filter((x) => x.broken))
+    items.push(['bad', `${RES_NAME[p.k]} estropeado.`, `Lo conectaste al revés con la fuente encendida y soportó ${fmt(p.broken, 1)} V en inversa. Ya no luce aunque le des la vuelta. Quítalo con «Quitar» y pon uno nuevo con el ánodo (+), la pata larga, hacia su resistencia.`])
+  const res = across.filter((k) => k !== 'src')
+  if (an.powered && amm && res.length && !across.includes('src'))
+    items.push(['warn', `Amperímetro en paralelo con ${names(res)}.`, `Entre sus puntas casi no hay resistencia: ${res.length > 1 ? 'las cortocircuita y se quedan' : 'la cortocircuita y se queda'} sin corriente, y cambian las demás corrientes del circuito. Lo que marca no es la corriente de ${names(res)}. Para medirla, abre su rama y ciérrala con las puntas.`])
+  if (!items.length) return null
+  return (
+    <ul className="bench-alerts" aria-live="polite">
+      {items.map(([c, h, t]) => <li key={h} className={c}><b>{h}</b> {t}</li>)}
+    </ul>
   )
 }
 
@@ -177,11 +209,16 @@ export function BenchStatus({ id, target, source }) {
 /* Multímetro conectado a la placa de un montaje */
 export function BenchMeter({ id }) {
   const [bench, update, supply] = useBench(id)
-  const { m, probes, right } = measureBench(bench, supply)
+  const { an, m, probes, right } = measureBench(bench, supply)
+  // Con el amperímetro en paralelo, la lectura no es la corriente de ninguna rama: el consejo lo dice
+  const across = ammeterOn(bench) && an.powered ? parallelTo(bench) : []
+  const alarm = across.includes('src') && an.limited ? [['bad', 'CORTO'], 'El amperímetro cortocircuita la fuente: marca la corriente máxima que da la fuente, no la de una rama.']
+    : across.length && !across.includes('src') ? [['warn', 'PARALELO'], `El amperímetro está en paralelo con ${names(across)}: lo que marca no es su corriente.`]
+      : null
   return (
-    <Multimeter dial={bench.dial} power={bench.power} m={m} jack={bench.jack} probes={probes} right={right}
+    <Multimeter dial={bench.dial} power={bench.power} m={m} jack={bench.jack} probes={probes} right={right} fuse={bench.fuse} alarm={alarm}
       onDial={(dial) => update((b) => ({ ...b, dial }))} onPower={() => update((b) => ({ ...b, power: !b.power }))}
-      onJack={(jack) => update((b) => ({ ...b, jack }))} />
+      onJack={(jack) => update((b) => ({ ...b, jack }))} onFuse={() => update((b) => ({ ...b, fuse: false }))} />
   )
 }
 
@@ -192,7 +229,7 @@ export function BenchReadout({ id }) {
   const { r, right } = measureBench(bench, supply)
   const g = DIAL[bench.dial].g
   const zones = g === 'adc' || g === 'vdc' || g === 'ohm' ? fondos(g) : []
-  const text = r.kind === 'off' ? 'Apagado' : !right ? 'Revisa el borne' : r.over ? 'OL' : `${r.text} ${r.unit}`
+  const text = r.kind === 'off' ? 'Apagado' : bench.fuse && bench.jack === 'mA' ? 'Fusible fundido' : !right ? 'Revisa el borne' : r.over ? 'OL' : `${r.text} ${r.unit}`
   return (
     <div className="readout-sm" aria-label="Lectura del multímetro">
       <div className="readout-lcd"><span className="mono">{text}</span></div>
@@ -210,7 +247,12 @@ export function TerminalMeter({ id, rows }) {
   const [bench, update, supply] = useBench(id)
   const row = rows.find((x) => x.term === bench.term) ?? rows[0]
   const right = jackOk(bench)
-  const m = { ohms: Infinity, amps: 0, volts: right ? TERMINALS[row.term].volts(supply) : 0 }
+  const volts = TERMINALS[row.term].volts(supply)
+  /* Con el cable rojo en 20A o mA, las puntas unen el + y el − de la salida a través del amperímetro: un cortocircuito.
+     La salida limita su corriente (se toma I_MAX en todas) y, en el borne mA, el fusible se funde. */
+  const amm = ammeterOn(bench), shorted = amm && volts > 0
+  useEffect(() => { if (shorted && bench.jack === 'mA') update((b) => ({ ...b, fuse: true })) }, [shorted, bench.jack, update])
+  const m = { ohms: Infinity, amps: right && shorted ? I_MAX : 0, volts: right && !amm ? volts : 0 }
   const r = reading(bench.dial, m, bench.power)
   const can = r.kind === 'volt' && !r.over && m.volts > 0
   return (
@@ -220,9 +262,14 @@ export function TerminalMeter({ id, rows }) {
           <button key={x.term} type="button" role="radio" aria-checked={x.term === row.term} onClick={() => update((b) => ({ ...b, term: x.term }))}>{x.label}</button>
         ))}
       </div>
-      <Multimeter dial={bench.dial} power={bench.power} m={m} jack={bench.jack} probes right={right}
+      <Multimeter dial={bench.dial} power={bench.power} m={m} jack={bench.jack} probes right={right} fuse={bench.fuse}
         onDial={(dial) => update((b) => ({ ...b, dial }))} onPower={() => update((b) => ({ ...b, power: !b.power }))}
-        onJack={(jack) => update((b) => ({ ...b, jack }))} />
+        onJack={(jack) => update((b) => ({ ...b, jack }))} onFuse={() => update((b) => ({ ...b, fuse: false }))} />
+      {shorted && (
+        <ul className="bench-alerts" aria-live="polite">
+          <li className="bad"><b>Salida en cortocircuito.</b> Con el cable rojo en {bench.jack === '20A' ? '20 A' : 'mA'}, el multímetro es un amperímetro: entre sus puntas casi no hay resistencia y une el + y el − de la salida. La fuente limita la corriente. Para medir tensión, el cable rojo va en VΩHz.</li>
+        </ul>
+      )}
       <button className="btn sm" type="button" disabled={!can} style={{ marginTop: 8 }} onClick={() => update((b) => note(b, row.k, r))}>
         {can ? `Anotar ${r.text} ${r.unit} en ${row.label}` : 'Sin lectura de tensión'}
       </button>
@@ -244,9 +291,9 @@ export function ResistorMeter({ id }) {
       <div className="segctl" role="radiogroup" aria-label="Resistencia que se mide" style={{ marginBottom: 8 }}>
         {LOOSE.map((x) => <button key={x} type="button" role="radio" aria-checked={x === k} onClick={() => update((b) => ({ ...b, pick: x }))}>{RES_NAME[x]}</button>)}
       </div>
-      <Multimeter dial={bench.dial} power={bench.power} m={m} jack={bench.jack} probes right={right}
+      <Multimeter dial={bench.dial} power={bench.power} m={m} jack={bench.jack} probes right={right} fuse={bench.fuse}
         onDial={(dial) => update((b) => ({ ...b, dial }))} onPower={() => update((b) => ({ ...b, power: !b.power }))}
-        onJack={(jack) => update((b) => ({ ...b, jack }))} />
+        onJack={(jack) => update((b) => ({ ...b, jack }))} onFuse={() => update((b) => ({ ...b, fuse: false }))} />
       <button className="btn sm" type="button" disabled={!can} style={{ marginTop: 8 }} onClick={() => update((b) => note(b, k, r))}>
         {can ? `Anotar ${r.text} ${r.unit} en ${RES_NAME[k]}` : 'Sin lectura de resistencia'}
       </button>
@@ -286,13 +333,17 @@ export function CurrentLog({ id, keys, target }) {
   const el = branchOf(bench)
   const key = el === 'src' && !keys.includes('Ig') ? 'IR1' : CURRENT_KEY[el]
   const ammeter = DIAL[bench.dial].g === 'adc' && right
-  const valid = ammeter && r.kind === 'amp' && !r.over && !an.short && keys.includes(key) && an.amps
-  const say = an.short || an.overload ? 'Cortocircuito: el amperímetro está en paralelo con la fuente. Quita las puntas.'
+  const blown = bench.fuse && bench.jack === 'mA'
+  const across = parallelTo(bench).filter((k) => k !== 'src')
+  const valid = ammeter && !blown && r.kind === 'amp' && !r.over && !an.short && !an.limited && keys.includes(key) && an.amps
+  const say = an.limited ? 'Cortocircuito: la fuente está limitando la corriente. Mira el aviso bajo la placa.'
     : !an.powered ? 'La fuente no está alimentando el circuito.'
-      : !ammeter ? 'Prepara el multímetro como amperímetro.'
-        : !bench.red || !bench.black ? 'Coloca las dos puntas para cerrar la rama abierta.'
-          : !el ? 'El amperímetro no está en serie: abre la rama y ciérrala con las puntas.'
-            : `Amperímetro en serie con ${el === 'src' ? 'la fuente' : RES_NAME[el]}.`
+      : blown && DIAL[bench.dial].g === 'adc' ? 'El fusible del borne mA está fundido: cámbialo en el multímetro.'
+        : !ammeter ? 'Prepara el multímetro como amperímetro.'
+          : !bench.red || !bench.black ? 'Coloca las dos puntas para cerrar la rama abierta.'
+            : !el && across.length ? `El amperímetro está en paralelo con ${names(across)}: no mide su corriente y la cortocircuita.`
+              : !el ? 'El amperímetro no está en serie: abre la rama y ciérrala con las puntas.'
+                : `Amperímetro en serie con ${el === 'src' ? 'la fuente' : RES_NAME[el]}.`
   return (
     <div className="logbox">
       <h3>Medidas de corriente</h3>
@@ -346,7 +397,7 @@ export function R6Swap({ id }) {
   const [bench, update] = useBench(id)
   const cur = caseOf(bench)
   const set = (as) => update((b) => ({
-    ...b, parts: b.parts.map((p) => (p.k === 'r6' ? { ...p, as: as ?? undefined } : p)),
+    ...b, parts: b.parts.map((p) => (p.k === 'r6' ? { ...p, as: as ?? undefined, burnt: undefined } : p)),
     seen: { ...b.seen, [as ?? 'r6']: true },
   }))
   return (
@@ -369,7 +420,7 @@ export function LedRows({ id }) {
           <div key={k} className="ledrow">
             <b>{t}</b>
             <div className="ledbar" role="img" aria-label={`Brillo del ${t}: ${Math.round(lit * 100)} %`}><i style={{ width: `${lit * 100}%` }} /></div>
-            <span className="mono">{s?.on ? amp(s.amps) : 'apagado'}</span>
+            <span className="mono">{s?.broken ? 'estropeado' : s?.on ? amp(s.amps) : 'apagado'}</span>
           </div>
         )
       })}

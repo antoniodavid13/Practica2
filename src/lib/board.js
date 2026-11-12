@@ -44,7 +44,7 @@ export const RES_NAME = { r1: 'R₁', r2: 'R₂', r3: 'R₃', r4: 'R₄', r5: 'R
 // Valor "real" de cada resistencia del simulador: dentro de su tolerancia, como en el laboratorio.
 export const REAL = { r1: 1491, r2: 2213, r3: 3276, r3b: 3312, r4: 9930, r5: 2.176e6, r6: 98700 }
 
-const names = (ks) => {
+export const names = (ks) => {
   const n = ks.map((k) => RES_NAME[k])
   return n.length > 1 ? n.slice(0, -1).join(', ') + ' y ' + n.at(-1) : n[0]
 }
@@ -149,6 +149,10 @@ export function checkBench(bench, targetKey, withSource) {
     const ok = leds.every((p) => netOfHole(find, p.a) === map[target[p.k][0]])
     items.push({ ok, text: ok ? 'LEDs con el ánodo hacia su resistencia' : 'Hay un LED al revés: el ánodo (+) va hacia su resistencia' })
   }
+  const broken = leds.filter((p) => p.broken)
+  if (broken.length) items.push({ ok: false, text: `${names(broken.map((p) => p.k))} estropeado: quítalo y pon uno nuevo` })
+  const burnt = res.filter((p) => p.burnt)
+  if (burnt.length) items.push({ ok: false, text: `${names(burnt.map((p) => p.k))} quemada: baja la tensión y pon una nueva` })
   if (withSource) {
     const placed = bench.src?.pos && bench.src?.neg
     const got = placed ? [netOfHole(find, bench.src.pos), netOfHole(find, bench.src.neg)] : []

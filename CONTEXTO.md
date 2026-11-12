@@ -34,6 +34,7 @@ La documentación completa está en la bóveda LabVideos: `06 Prácticas/Prácti
 - **Intervalos:** con cada resistencia en sus extremos, no «teórico ± 5 %», que no vale para corrientes de rama.
 - **R₆:** una sola pieza `r6`; su campo `as` dice qué resistencia física hace de R₆ (`r3b` o `r5`).
 - **Fuente:** lo que entrega difiere un poco de lo que marca su voltímetro (`OFFSET` y `FIVE` en `practice.js`). Son valores propuestos.
+- **Errores con consecuencias:** la fuente limita a 1 A y su tensión cae (`analyze` en `sim.js`). El fusible del borne mA se funde por encima de 400 mA (`FUSE_MA`) un LED se estropea con más de 5 V en inversa (`LED_VR`) y una resistencia se quema si disipa más de ½ W (`P_MAX`), y queda abierta. Las tres cifras son propuestas. `settle()` en `practice.js` aplica estos cambios tras cada acción. Un amperímetro en paralelo con una resistencia se detecta con `parallelTo()`.
 
 ## Pendiente
 
