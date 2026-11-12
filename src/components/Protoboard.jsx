@@ -168,6 +168,12 @@ function moveHole(id, key) {
 
 const ZOOMS = ['Ajustar', 'Grande', 'Muy grande']
 
+/* Vista: los montajes del guion caben en la mitad izquierda de la placa. «Zona del montaje» muestra las columnas
+   1 a 36 (los agujeros se ven casi el doble de grandes) y se amplía sola si algo queda más a la derecha. */
+const ZONE_MIN = 35 // índice de la última columna que se ve siempre (columna 36)
+const colOf = (id) => { const r = rowOf(id); return +id.slice(r.length) - 1 }
+const VIEWS = [['zone', 'Zona del montaje'], ['full', 'Placa entera']]
+
 /* Protoboard. Con `interactive`, avisa de los clics en agujeros (onHole) y en piezas (onPart, para quitar).
    También se maneja con teclado (flechas + Intro) y, en pantallas pequeñas, se puede ampliar y desplazar. */
 export function Protoboard({
@@ -177,6 +183,7 @@ export function Protoboard({
   const [kb, setKb] = useState(null)
   const [focused, setFocused] = useState(false)
   const [zoom, setZoom] = useState(() => (interactive && window.matchMedia?.('(max-width: 700px)').matches ? 1 : 0))
+  const [view, setView] = useState('zone')
   const find = netFinder(parts)
   const hoverNet = hover ? find(HOLE.get(hover).node) : null
   const erase = interactive && tool === 'erase'
@@ -193,7 +200,7 @@ export function Protoboard({
   // El agujero elegido con teclado se comporta como el del ratón: resalta su nodo y lo describe abajo
   const goKb = (id, box) => {
     setKb(id); setHover(id)
-    const px = (HOLE.get(id).x / W) * box.scrollWidth
+    const px = (HOLE.get(id).x / vw) * box.scrollWidth
     if (px < box.scrollLeft + 24 || px > box.scrollLeft + box.clientWidth - 24) box.scrollLeft = px - box.clientWidth / 2
   }
   const onKey = (e) => {
@@ -202,14 +209,24 @@ export function Protoboard({
   }
   const kbHole = interactive && focused && kb && HOLE.get(kb)
 
+  // Ancho visible: hasta 4 columnas más allá de lo último que hay en la placa, y nunca menos de 36 columnas
+  const used = [...parts.flatMap((p) => [p.a, p.b]), red, black, src?.pos, src?.neg, pending, kb].filter(Boolean)
+  const last = Math.max(ZONE_MIN, ...used.map((id) => colOf(id) + 4))
+  const vw = view === 'zone' && last < COLS - 1 ? bx(last) + 22 : W
+
   return (
     <div className="pb">
       {interactive && (
-        <div className="segctl pb-zoom" role="radiogroup" aria-label="Tamaño de la placa">
-          {ZOOMS.map((t, i) => <button key={t} type="button" role="radio" aria-checked={zoom === i} onClick={() => setZoom(i)}>{t}</button>)}
+        <div className="pb-tools">
+          <div className="segctl pb-view" role="radiogroup" aria-label="Parte de la placa que se ve">
+            {VIEWS.map(([k, t]) => <button key={k} type="button" role="radio" aria-checked={view === k} onClick={() => setView(k)}>{t}</button>)}
+          </div>
+          <div className="segctl pb-zoom" role="radiogroup" aria-label="Tamaño de la placa">
+            {ZOOMS.map((t, i) => <button key={t} type="button" role="radio" aria-checked={zoom === i} onClick={() => setZoom(i)}>{t}</button>)}
+          </div>
         </div>
       )}
-      <div className={`pb-scroll z-${zoom}`} {...(interactive && {
+      <div className={`pb-scroll z-${zoom}${vw < W ? ' cropped' : ''}`} style={{ '--vw': vw / W }} {...(interactive && {
         tabIndex: 0, onKeyDown: onKey,
         'aria-label': `${label || 'Protoboard'}. Flechas para recorrer los agujeros, Intro para elegir uno.`,
         // Solo con foco de teclado: al pulsar con el ratón o el dedo no aparece el cursor
@@ -221,7 +238,7 @@ export function Protoboard({
         onKeyUp: () => setFocused(true),
         onBlur: () => { setFocused(false); setHover(null) },
       })}>
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label || 'Protoboard'}>
+        <svg viewBox={`0 0 ${vw} ${H}`} role="img" aria-label={label || 'Protoboard'}>
           <BoardBase />
           {hl.map((x, i) => <Strip key={i} node={x.node} cls={only(step, x.on, `pb-hl${x.alt ? ' alt' : ''}`)} />)}
           {hoverNet && NODES.filter((n) => find(n) === hoverNet).map((n) => <Strip key={n} node={n} cls="pb-hover" />)}

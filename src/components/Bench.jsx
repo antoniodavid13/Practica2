@@ -12,22 +12,30 @@ import { Multimeter } from './Multimeter'
 import { Quiz } from './Ui'
 
 const TOOL = {
-  r1: { t: 'R₁ · 1,5 kΩ', c: 'var(--r1)' },
-  r2: { t: 'R₂ · 2,2 kΩ', c: 'var(--r2)' },
-  r3: { t: 'R₃ · 3,3 kΩ', c: 'var(--r3)' },
-  r4: { t: 'R₄ · 10 kΩ', c: 'var(--r4)' },
-  r5: { t: 'R₅ · 2,2 MΩ', c: 'var(--r5)' },
+  r1: { t: 'R₁ 1,5 kΩ', c: 'var(--r1)' },
+  r2: { t: 'R₂ 2,2 kΩ', c: 'var(--r2)' },
+  r3: { t: 'R₃ 3,3 kΩ', c: 'var(--r3)' },
+  r4: { t: 'R₄ 10 kΩ', c: 'var(--r4)' },
+  r5: { t: 'R₅ 2,2 MΩ', c: 'var(--r5)' },
   r6: { t: 'R₆', c: 'var(--r6)' },
-  led1: { t: 'LED de R₃', c: 'var(--led)' },
-  led2: { t: 'LED de R₆', c: 'var(--led)' },
+  led1: { t: 'LED R₃', c: 'var(--led)' },
+  led2: { t: 'LED R₆', c: 'var(--led)' },
   wire: { t: 'Cable', c: 'var(--fg-2)' },
-  'src+': { t: 'Pinza + fuente', c: '#dc2626' },
-  'src-': { t: 'Pinza − fuente', c: '#18181b' },
-  red: { t: 'Punta roja', c: '#dc2626' },
-  black: { t: 'Punta negra · COM', c: '#18181b' },
+  'src+': { t: 'Pinza +', c: '#dc2626' },
+  'src-': { t: 'Pinza −', c: '#18181b' },
+  red: { t: 'Roja', c: '#dc2626' },
+  black: { t: 'Negra · COM', c: '#18181b' },
   move: { t: 'Mover pata', c: 'transparent' },
   erase: { t: 'Quitar', c: 'transparent' },
 }
+
+// Grupos de la bandeja, en este orden; cada herramienta va al primero que la acepta
+const GROUPS = [
+  ['Piezas', (t) => /^(r\d|led|wire)/.test(t)],
+  ['Fuente', (t) => t.startsWith('src')],
+  ['Puntas', (t) => t === 'red' || t === 'black'],
+  ['Editar', (t) => t === 'move' || t === 'erase'],
+]
 
 const useBench = (id) => {
   const { lab, setLab } = useLab()
@@ -129,13 +137,25 @@ export function Bench({ id, tools, target }) {
 
   return (
     <div className="bench">
-      <div className="tray" role="toolbar" aria-label="Piezas">
-        {tools.map((t) => (
-          <button key={t} type="button" className={`tool${t === 'erase' ? ' erase' : ''}`} aria-pressed={tool === t}
-            style={{ '--c': TOOL[t].c }} onClick={() => pick(t)}>
-            {t !== 'erase' && t !== 'move' && <i />}{TOOL[t].t}
-          </button>
-        ))}
+      <div className="tray" role="toolbar" aria-label="Herramientas">
+        {GROUPS.map(([name, has]) => {
+          const ts = tools.filter(has)
+          if (!ts.length) return null
+          return (
+            <div key={name} className="tray-group" role="group" aria-label={name}>
+              <span className="tray-lbl" aria-hidden="true">{name}</span>
+              <div className="tray-tools">
+                {ts.map((t) => (
+                  <button key={t} type="button" className={`tool${t === 'erase' ? ' erase' : ''}`} aria-pressed={tool === t}
+                    aria-label={name === 'Fuente' ? `${TOOL[t].t} de la fuente` : name === 'Puntas' ? `Punta ${TOOL[t].t.toLowerCase()}` : undefined}
+                    style={{ '--c': TOOL[t].c }} onClick={() => pick(t)}>
+                    {t !== 'erase' && t !== 'move' && <i />}{TOOL[t].t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
       </div>
       <div className="panel pb-panel">
         <Protoboard parts={bench.parts} red={bench.red} black={bench.black} src={bench.src} leds={an.led} interactive tool={tool}

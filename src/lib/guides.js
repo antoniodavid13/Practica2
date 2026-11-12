@@ -143,8 +143,8 @@ export const buildGuide = (id, target, keys) => (lab) => {
 export const connectGuide = (id, target, posNode, negNode) => (lab) => {
   const b = lab[id]
   return [
-    { t: `Elige «Pinza + fuente» y pulsa un agujero del nodo ${posNode}.`, why: 'La pinza roja lleva el positivo de la fuente al nodo por el que entra la corriente al circuito.', ok: !!b.src?.pos },
-    { t: `Elige «Pinza − fuente» y pulsa un agujero del nodo ${negNode}.`, why: 'La pinza negra cierra el circuito de vuelta a la fuente. Rojo al positivo y negro al negativo es el convenio de colores.', ok: !!b.src?.neg },
+    { t: `En «Fuente», elige «Pinza +» y pulsa un agujero del nodo ${posNode}.`, why: 'La pinza roja lleva el positivo de la fuente al nodo por el que entra la corriente al circuito.', ok: !!b.src?.pos },
+    { t: `En «Fuente», elige «Pinza −» y pulsa un agujero del nodo ${negNode}.`, why: 'La pinza negra cierra el circuito de vuelta a la fuente. Rojo al positivo y negro al negativo es el convenio de colores.', ok: !!b.src?.neg },
     { t: 'Comprueba que todo queda en verde: rojo al positivo y negro al negativo.', why: 'Con la polaridad al revés, todas las corrientes cambiarían de sentido y las medidas saldrían negativas.', ok: checkBench(b, target, true).ok, hint: firstBad(b, target, true) },
   ]
 }
@@ -179,7 +179,7 @@ export const currentGuide = (id, keys, need) => (lab) => {
     },
     { t: 'Abre una rama: pulsa uno de los botones «Abrir…» de abajo, o levanta una pata con «Mover pata».', why: 'Para que la corriente de una rama pase por el amperímetro, primero hay que interrumpirla.' },
     {
-      t: 'Cierra la rama con las puntas: elige «Punta roja» y pulsa el lado más cercano al + de la fuente; después «Punta negra» al otro lado.',
+      t: 'Cierra la rama con las puntas: en «Puntas», elige «Roja» y pulsa el lado más cercano al + de la fuente; después «Negra» al otro lado.',
       why: 'Las puntas cierran el hueco y toda la corriente de la rama atraviesa el amperímetro. Con la roja hacia el +, la corriente entra por ella y la lectura sale positiva.',
       ok: amm && !!el && !an.limited,
       hint: an.limited ? 'Cortocircuito: la fuente está limitando la corriente. Si las puntas están en paralelo con la fuente, quítalas y ponlas en la rama abierta.'
@@ -217,8 +217,8 @@ export const ledGuide = (lab) => {
   return [
     { t: 'Quita las puntas del multímetro: herramienta «Quitar» y pulsa cada punta.', why: 'Así el circuito queda solo con resistencias y LEDs, como en la Figura 2.7.', ok: !b.red && !b.black },
     { t: 'Abre la rama de R₃ con «Mover pata» para dejar sitio al LED.', why: 'Cada LED va en serie con su resistencia: tiene que quedar dentro de la rama, por donde pasa su corriente.' },
-    { t: 'Elige «LED de R₃»: pulsa primero el agujero del ánodo (+, el lado de R₃) y después el del cátodo (−). Al revés, con 36 V, el LED se estropea.', why: 'El LED solo conduce y luce si la corriente va del ánodo al cátodo. El ánodo es la pata larga.', ok: has('led1') },
-    { t: 'Haz lo mismo en la rama de R₆ con «LED de R₆».', why: 'Con un LED en cada rama puedes comparar las dos corrientes a simple vista.', ok: has('led2') },
+    { t: 'Elige «LED R₃»: pulsa primero el agujero del ánodo (+, el lado de R₃) y después el del cátodo (−). Al revés, con 36 V, el LED se estropea.', why: 'El LED solo conduce y luce si la corriente va del ánodo al cátodo. El ánodo es la pata larga.', ok: has('led1') },
+    { t: 'Haz lo mismo en la rama de R₆ con «LED R₆».', why: 'Con un LED en cada rama puedes comparar las dos corrientes a simple vista.', ok: has('led2') },
     { t: 'Comprueba que todo queda en verde y que los dos LEDs lucen.', why: 'El brillo de cada LED crece con la corriente de su rama.', ok: checkBench(b, 'IIIL', true).ok, hint: firstBad(b, 'IIIL', true), final: true },
   ]
 }

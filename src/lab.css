@@ -38,8 +38,12 @@
 /* ---------- banco: bandeja + placa ---------- */
 /* minmax(0,…): la placa ampliada se desplaza dentro de su panel en vez de ensancharlo */
 .bench{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
-.tray{display:flex;flex-wrap:wrap;gap:6px}
-.tool{height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg-2);font:500 12.5px var(--font-mono);display:inline-flex;align-items:center;gap:7px;cursor:pointer;transition:border-color .2s,box-shadow .2s,color .2s}
+/* Bandeja: herramientas por grupos, cada uno con su etiqueta encima */
+.tray{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 14px}
+.tray-group{display:grid;gap:4px;min-width:0}
+.tray-lbl{font:600 10px var(--font-sans);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tray-tools{display:flex;flex-wrap:wrap;gap:6px}
+.tool{height:30px;padding:0 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg-2);font:500 12px var(--font-mono);display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:border-color .2s,box-shadow .2s,color .2s}
 .tool:hover{border-color:var(--line-2);color:var(--fg)}
 .tool i{width:9px;height:9px;border-radius:3px;background:var(--c);box-shadow:0 0 0 1px color-mix(in srgb,var(--fg) 15%,transparent)}
 .tool[aria-pressed="true"]{border-color:var(--fg);color:var(--fg);box-shadow:0 0 0 1px var(--fg)}
@@ -218,10 +222,16 @@ select option{background:var(--surface);color:var(--fg)}
 /* ---------- protoboard: cursor de teclado y ampliación ---------- */
 .pb-scroll{overflow-x:auto;border-radius:10px;overscroll-behavior-x:contain}
 .pb-scroll:focus-visible{outline:2px solid var(--cur);outline-offset:2px}
-.pb-scroll.z-1 svg{min-width:1000px}
-.pb-scroll.z-2 svg{min-width:1500px}
+/* --vw: fracción de la placa que se ve. La ampliación se escala con ella para que el agujero mida lo mismo */
+.pb-scroll.z-1 svg{min-width:calc(1000px * var(--vw,1))}
+.pb-scroll.z-2 svg{min-width:calc(1500px * var(--vw,1))}
+.pb-tools{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;margin-bottom:8px}
+.pb-view{width:max-content;max-width:100%}
+/* Vista recortada: el borde derecho se difumina para indicar que la placa sigue */
+.pb-scroll.cropped{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}
+.pb-view button{min-width:0;flex:none;padding:0 12px;height:28px;font-size:11.5px;white-space:nowrap}
 .pb-kb{fill:none;stroke:var(--cur);stroke-width:2.2;pointer-events:none}
-.pb-zoom{width:max-content;max-width:100%;margin-bottom:8px}
+.pb-zoom{width:max-content;max-width:100%}
 .pb-zoom button{min-width:0;flex:none;padding:0 12px;height:28px;font-size:11.5px;white-space:nowrap}
 /* Con ratón y pantalla amplia la placa cabe entera: no hace falta ampliar */
 @media (hover:hover) and (pointer:fine) and (min-width:900px){
@@ -242,7 +252,7 @@ select option{background:var(--surface);color:var(--fg)}
   .readout-sm .segctl button{min-width:0;padding:0 2px;height:30px;font-size:11.5px}
 }
 @media (max-width:560px){
-  .pb-scroll.z-0 svg{min-width:640px}
+  .pb-scroll.z-0 svg{min-width:calc(640px * var(--vw,1))}
 }
 
 /* ---------- Tablas en tarjetas (móvil) ---------- */
