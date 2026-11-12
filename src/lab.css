@@ -344,8 +344,8 @@ select option{background:var(--surface);color:var(--fg)}
 .pb-clip .tip{fill:#d4d4d8;stroke:#52525b;stroke-width:1}
 .pb-clip .cap{stroke-width:1}
 .pb-clip text{font:700 7.5px var(--font-mono);fill:#fff}
-.pb-led{fill:color-mix(in srgb,var(--led) var(--lit,0%),var(--body));stroke:var(--led);stroke-width:1.2}
-.pb-led-glow{fill:var(--led);pointer-events:none;transition:opacity .35s var(--ease);filter:blur(4px)}
+.pb-led{fill:color-mix(in srgb,var(--led-on) var(--lit,0%),var(--led-off));stroke:#450a0a;stroke-width:1.2;transition:fill .35s var(--ease)}
+.pb-led-glow{fill:var(--led-glow);pointer-events:none;transition:opacity .35s var(--ease);filter:blur(4px)}
 .pb-part.burnt .pb-body{fill:#1c1917;stroke:var(--bad);stroke-dasharray:2 1.5}
 .pb-part.burnt .pb-band{opacity:.2}
 .pb-led.broken{fill:#3f3f46;stroke:var(--bad);stroke-dasharray:2 1.5}
@@ -357,9 +357,9 @@ select option{background:var(--surface);color:var(--fg)}
 .bench-alerts b{color:var(--b)}
 .sch-src{fill:var(--surface);stroke:var(--fg);stroke-width:2}
 .sch-sign{font:600 15px var(--font-mono);fill:var(--fg)}
-.sch-led{fill:var(--led);stroke:var(--led);stroke-width:1.5}
+.sch-led{fill:color-mix(in srgb,var(--led-on) var(--lit,0%),var(--led-off));stroke:var(--led);stroke-width:1.5;transition:fill .35s var(--ease)}
 .sch-led-off{fill:var(--surface)}
-.sch-led-glow{fill:var(--led);filter:blur(7px);transition:opacity .35s var(--ease)}
+.sch-led-glow{fill:var(--led-glow);filter:blur(7px);transition:opacity .35s var(--ease)}
 
 /* ---------- fuente de alimentación ---------- */
 .supply{background:#c9ccd1;color:#18181b;border:1px solid var(--line-2);border-radius:14px;padding:12px;display:grid;gap:10px;box-shadow:var(--shadow)}
@@ -392,7 +392,7 @@ select option{background:var(--surface);color:var(--fg)}
 .leds{display:grid;gap:8px;margin-top:12px}
 .ledrow{display:grid;grid-template-columns:90px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;font-size:13px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 .ledbar{height:10px;border-radius:99px;background:var(--sunken);overflow:hidden}
-.ledbar i{display:block;height:100%;background:var(--led);border-radius:99px}
+.ledbar i{display:block;height:100%;background:var(--led-on);border-radius:99px}
 .part-svg{display:block;width:100%;height:64px}
 @media (max-width:560px){.supply-chs,.supply-disp{grid-template-columns:minmax(0,1fr)}.ledrow{grid-template-columns:minmax(0,1fr)}}
 .parts.p3{grid-template-columns:repeat(3,minmax(0,1fr))}

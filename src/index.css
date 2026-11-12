@@ -6,6 +6,7 @@
   --m1:#7c3aed; --m2:#0d9488; --m3:#ea580c;          /* bloques I (violeta), II (verde azulado) y III (naranja) */
   --ok:#059669; --bad:#e11d48;
   --board:#f4f4f5; --hole:#d4d4d8; --body:#e6d3a8; --leg:#a1a1aa;
+  --led-off:#7f1d1d; --led-on:#fca5a5; --led-glow:#ef4444; /* LED de la placa: rojo oscuro apagado, rojo claro encendido. Igual en los dos temas, como el componente real */
   --lcd:#e4ead9; --lcd-fg:#1f2a17; --lcd-ghost:rgba(31,42,23,.07);
   --band-brown:#7a4419; --band-red:#d0312d; --band-orange:#ee7a1b; --band-green:#1f9a4b; --band-gold:#c8a03a; --band-black:#18181b; --band-yellow:#eab308;
   --font-sans:"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;

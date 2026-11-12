@@ -48,7 +48,7 @@ function LedSym({ x, y, amps }) {
   return (
     <>
       <circle className="sch-led-glow" cx={x} cy={y} r="18" style={{ opacity: lit * 0.7 }} />
-      <path className="sch-led" d={`M${x - 10} ${y - 10} L${x - 10} ${y + 10} L${x + 8} ${y} Z`} style={{ fillOpacity: 0.2 + lit * 0.8 }} />
+      <path className="sch-led" d={`M${x - 10} ${y - 10} L${x - 10} ${y + 10} L${x + 8} ${y} Z`} style={{ '--lit': `${Math.round(lit * 100)}%` }} />
       <path className="sch-led" d={`M${x + 8} ${y - 10} V${y + 10}`} />
     </>
   )
